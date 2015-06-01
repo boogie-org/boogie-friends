@@ -101,7 +101,9 @@
   (pcase command
     (`interactive (company-begin-backend 'boogie-friends-snippets))
     (`prefix (company-grab-symbol))
-    (`candidates (boogie-friends-candidates-snippet arg (funcall (boogie-friends-mode-var 'init-snippets))))
+    (`candidates (let ((snippetsf (boogie-friends-mode-var 'init-snippets)))
+                   (when (functionp snippetsf)
+                     (boogie-friends-candidates-snippet arg (funcall snippetsf)))))
     (`match (get-text-property 0 'match arg))
     (`ignore-case t)
     (`sorted t)
