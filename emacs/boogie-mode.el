@@ -15,10 +15,10 @@
 (defvar boogie-font-lock-keywords
   (let ((sb "\\(?:\\sw\\|[<>]\\)+"))
     (list
-     (cons "{ [^{]+ }"
+     (cons "{ [^{\n]+ }"
            font-lock-preprocessor-face)
-     (cons "{:[^{]+}"
-           font-lock-constant-face)
+     (list "{:[^{\n]+}"
+           0 font-lock-constant-face 'append)
      (cons "\\_<T[A-Z]\\sw+\\_>"
            font-lock-type-face)
      (list (concat "\\(\\_<\\(" sb "#" sb "\\|\\$" sb "\\)\\_>\\)(")
