@@ -1,0 +1,92 @@
+var ${$name}: ${$type};
+
+var ${$name} := ${$value};
+
+var ${$name}: ${$type} := ${$value};
+
+method ${1:$name<T>}(${2:$params}) ${3:returns (${4:$vars})} {
+  ${5:$body}
+}
+
+method ${1:$name<T>}(${2:$params}) ${3:returns (${4:$vars})}${5:
+  requires ${6:$pre-condition}}${7:
+  modifies ${8:$frame}}${9:
+  ensures ${10:$post-condition}}${11:
+  decreases ${12:$rank}}
+{
+  ${13:$body}
+}
+
+constructor ${1:$name<T>}(${2:$params}) {
+  ${3:$body}
+}
+
+constructor ${1:$name<T>}(${2:$params}) ${3:
+  requires ${4:$pre-condition}}${5:
+  modifies ${6:$frame}}${7:
+  ensures ${8:$post-condition}}${9:
+  decreases ${10:$rank}}
+{
+  ${11:$body}
+}
+
+function ${1:$name<T>}(${2:$params}): ${3:$return-type} {
+  ${4:$body}
+}
+
+function ${1:$name<T>}(${2:$params}): ${3:$return-type}${4:
+  requires ${5:$pre-condition}}${6:
+  modifies ${7:$frame}}${8:
+  ensures ${9:$post-condition}}${10:
+  decreases ${11:$rank}}
+{
+  ${12:$body}
+}
+
+function method ${1:$name<T>}(${2:$params}): ${3:$return-type}${4:
+  requires ${5:$pre-condition}}${6:
+  modifies ${7:$frame}}${8:
+  ensures ${9:$post-condition}}${10:
+  decreases ${11:$rank}}
+{
+  ${12:$body}
+}
+
+class ${$name<T>} {
+  ${$class-body}
+}
+
+datatype ${$name<T>} = ${$constructors}
+
+assert ${$expr};
+
+print ${$expr};
+
+if ${$condition} {
+   ${$body}
+}
+
+if ${$condition} {
+   ${$true-body}
+} else {
+   ${$false-body}
+}
+
+if ${$condition} then ${$true-body} else ${$false-body}
+
+while ${1:$condition} {
+  ${2:$body}
+}
+
+while ${1:$condition}${2:
+  invariant ${3:$invariant}}${4:
+  modified ${5:$frame}}${6:
+  decreases ${7:$rank}}
+{
+  ${8:$body}
+}
+
+match ${1:$expr} {
+  case ${2:$constructor} => ${3:$body}
+  ${4:$more-cases}
+}
