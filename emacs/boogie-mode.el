@@ -63,7 +63,7 @@
 
 (defvar-local boogie-highlighting-overlay nil)
 
-(defun boogie-highlight-current-line (exact)
+(defun boogie-highlight-current-line (_exact)
   (interactive)
   (boogie-friends-clean-overlay 'dafny-jump-overlay)
   (boogie-friends-clean-overlay nil 'boogie-highlighting-overlay)
