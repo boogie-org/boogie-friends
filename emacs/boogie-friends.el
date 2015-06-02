@@ -65,6 +65,23 @@ as prettification.")
   "Append SUFFIX to name of current mode, returning a symbol."
   (intern (concat (boogie-friends-mode-name) "-" (symbol-name suffix))))
 
+(defmacro boogie-friends-with-click (event mode set-point &rest body)
+  "Run BODY in the buffer pointed to by EVENT, if in mode MODE.
+If SET-POINT, place the point where EVENT points to."
+  (declare (indent defun)
+           (debug (form form form &rest form)))
+  `(progn
+     (save-excursion
+       (mouse-set-point ,event)
+       (-when-let* ((window  (posn-window (event-start event)))
+                    (buffer  (window-buffer window)))
+         (with-selected-window window
+           (with-current-buffer buffer
+             (when (eq major-mode ,mode)
+               ,@body)))))
+     (when ,set-point
+       (mouse-set-point ,event))))
+
 (defun boogie-friends-keywords (command &optional arg &rest ignored)
   "A company-mode backend for keywords."
   (interactive (list 'interactive))

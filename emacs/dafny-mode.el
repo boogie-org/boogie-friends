@@ -103,7 +103,8 @@ Useful to ignore mouse-up events handled mouse-down events."
     (define-key map (kbd "C-c C-j") 'dafny-jump-to-boogie)
     (define-key map (kbd "C-c C-?") 'dafny-docs-open) ;; TODO enable by default?
     (define-key map (kbd "<C-mouse-1>") 'dafny-ignore-event)
-    (define-key map (kbd "<C-down-mouse-1>") 'dafny-click-jump-to-boogie)
+    (define-key map (kbd "<C-down-mouse-1>") 'dafny-click-find-definition)
+    (define-key map (kbd "<C-S-down-mouse-1>") 'dafny-click-jump-to-boogie)
     (define-key map (kbd "<backtab>") 'dafny-cycle-indentation)
     map)
   "Keybindings for `dafny-mode'.")
@@ -303,16 +304,25 @@ highlighted."
     (overlay-put dafny-jump-overlay 'face 'highlight)
     (run-with-timer 0.5 nil #'boogie-friends-clean-overlay 'dafny-jump-overlay (current-buffer))))
 
+(defun dafny-click-find-definition (event)
+  "Find definitions of symbol at mouse.
+Symbol at point must be a function name. Search is restricted to
+open Dafny buffers."
+  (interactive "e")
+  (boogie-friends-with-click event 'dafny-mode nil
+    (-when-let* ((fun-name (thing-at-point 'symbol)))
+      (let ((match nil))
+        (occur-1 (concat "^" dafny-extended-defun-regexp "\\s-*\\_<" (regexp-quote fun-name) "\\_>") 5
+                 (cl-loop for b being the buffers when (string-match-p "\\.dfy\\'" (buffer-name b)) collect b))
+        (-when-let* ((buf (get-buffer "*Occur*")))
+          (with-current-buffer buf
+            (face-remap-add-relative 'match nil)))))))
+
 (defun dafny-click-jump-to-boogie (event)
   "Call `dafny-jump-to-boogie' on line under mouse."
   (interactive "e")
-  (mouse-set-point event)
-  (-when-let* ((window  (posn-window (event-start event)))
-             (buffer  (window-buffer window)))
-      (with-selected-window window
-        (with-current-buffer buffer
-          (when (eq major-mode 'dafny-mode)
-            (dafny-jump-to-boogie (line-number-at-pos (point)) nil))))))
+  (boogie-friends-with-click event 'dafny-mode t
+    (dafny-jump-to-boogie (line-number-at-pos (point)) nil)))
 
 (defun dafny-snippets-doc-buffer (arg)
   "Show documentation for snippet ARG."
