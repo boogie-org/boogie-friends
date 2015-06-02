@@ -30,6 +30,9 @@ sandbox: clean-sandbox package
 clean-sandbox:
 	rm -rf $(SANDBOX)
 
+test: elc
+	$(EMACS) tests.dfy
+
 clean: clean-package clean-elc
 	rm -f dafny-docs.html
 
