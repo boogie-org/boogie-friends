@@ -71,7 +71,7 @@
 (defun dafny-docs-open ()
   (interactive)
   (-when-let* ((document (with-temp-buffer
-                           (insert-file-contents "clean.html")
+                           (insert-file-contents (expand-file-name "dafny-docs.html" boogie-friends-directory))
                            (libxml-parse-html-region (point-min) (point-max)))))
     (with-current-buffer (get-buffer-create "*dafny-docs*")
       (help-mode)

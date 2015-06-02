@@ -31,12 +31,13 @@
            font-lock-keyword-face)
      (cons (concat "\\(" (regexp-opt '("bool" "int" "real") 'symbols) "\\)\\|\\(\\_<bv[0-9]+\\_>\\)")
            font-lock-type-face)))
-  "Default highlighting for Boogie mode")
+  "Font lock specifications for `boogie-mode'.")
 
 (defvar boogie-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-c") 'boogie-friends-verify)
-    map))
+    map)
+  "Keybindings for `boogie-mode'.")
 
 (defvar boogie-mode-syntax-table
   (let ((tbl (make-syntax-table)))
@@ -47,23 +48,26 @@
     (modify-syntax-entry ?/  "  124" tbl)
     (modify-syntax-entry ?*  "  23bn" tbl)
     tbl)
-  "Syntax table for boogie-mode")
+  "Syntax table for `boogie-mode'.")
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.bpl\\'" . boogie-mode))
 
+(flycheck-def-executable-var boogie "boogie")
+
 (flycheck-define-command-checker 'boogie
-  "A Boogie checker."
-  :command '("boogie" "/nologo" "/abbrevOutput" source)
+  "Flycheck checker for the Dafny programming language."
+  :command '("" "/nologo" "/abbrevOutput" source)
   :error-patterns boogie-friends-error-patterns
   :modes '(boogie-mode))
 
-
-(flycheck-def-executable-var boogie "boogie")
-
-(defvar-local boogie-highlighting-overlay nil)
+(defvar-local boogie-highlighting-overlay nil
+  "Temporary highlighting of a line matching a Dafny position.
+See `dafny-jump-to-boogie'.")
 
 (defun boogie-highlight-current-line (_exact)
+  "Temporarily highlight the current line.
+Existing highlights are suppressed."
   (interactive)
   (boogie-friends-clean-overlay 'dafny-jump-overlay)
   (boogie-friends-clean-overlay nil 'boogie-highlighting-overlay)

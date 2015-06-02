@@ -1,4 +1,4 @@
-;;; dafny-mode.el - Support for Dafny in Emacs
+;; dafny-mode.el - Support for Dafny in Emacs
 
 (require 'boogie-friends)
 (require 'boogie-mode)
@@ -11,10 +11,8 @@
 
 (defconst dafny-modifiers '("abstract" "ghost" "protected" "static"))
 
-(defconst dafny-builtins '("var"
-                           "module" "import" "default" "as" "opened"
-                           "include"
-                           "extends" "refines" "returns" "yields"))
+(defconst dafny-builtins '("var" "module" "import" "default" "as" "opened"
+                           "include" "extends" "refines" "returns" "yields"))
 
 (defconst dafny-keywords '("assert" "assume" "break" "else" "if" "label" "return" "then" "yield"
                            "print" "where" "while"
@@ -25,13 +23,39 @@
                         "imap" "int" "map" "multiset" "nat" "object"
                         "real" "seq" "set" "string"))
 
-(defconst dafny-all-keywords (cl-loop for source in '(dafny-defuns dafny-specifiers dafny-modifiers
-                                                                        dafny-builtins dafny-keywords dafny-types)
-                                           append (mapcar (lambda (kwd) (propertize kwd 'source source)) (symbol-value source))))
+(defconst dafny-block-heads '("while" "if" "else" "match" "calc"))
 
-(defconst dafny-snippets nil)
+(defconst dafny-all-keywords (cl-loop for source in '(dafny-defuns dafny-specifiers dafny-modifiers
+                                                                   dafny-builtins dafny-keywords dafny-types)
+                                      append (mapcar (lambda (kwd) (propertize kwd 'source source)) (symbol-value source))))
+
+(defconst dafny-defuns-regexp     (regexp-opt dafny-defuns 'symbols))
+(defconst dafny-specifiers-regexp (regexp-opt dafny-specifiers 'symbols))
+(defconst dafny-modifiers-regexp  (regexp-opt dafny-modifiers 'symbols))
+(defconst dafny-builtins-regexp   (regexp-opt dafny-builtins 'symbols))
+(defconst dafny-keywords-regexp   (regexp-opt dafny-keywords 'symbols))
+(defconst dafny-types-regexp      (regexp-opt dafny-types 'symbols))
+
+(defconst dafny-extended-defun-regexp (concat "\\s-*\\(" dafny-modifiers-regexp "\\)*\\s-*" dafny-defuns-regexp))
+
+(defconst dafny-extended-block-head-regexp (concat "\\s-*\\(" dafny-modifiers-regexp "\\)*"
+                                                   "\\s-*"    (regexp-opt (append dafny-block-heads dafny-defuns) 'symbols)))
+
+(defgroup dafny nil
+  "IDE extensions for the Dafny programming language."
+  :group 'languages)
+
+(defcustom dafny-snippets-repo "dafny-snippets"
+  "Name of file holding Dafny snippets.")
+
+(defconst dafny-snippets nil
+  "Cache of all known Dafny snippets, loaded from `dafny-snippets-repo'.")
 
 (defun dafny-init-snippets (&optional force-reload interactive)
+  "Initialize and return `dafny-snippets'.
+Reloading only happens if `dafny-snippets' is nil or if
+FORCE-RELOAD is non-nil. A non-nil INTERACTIVE value suppresses
+the return value."
   (interactive '(t t))
   (setq dafny-snippets
         (or (and (not force-reload) dafny-snippets)
@@ -47,7 +71,7 @@
 (defconst dafny-font-lock-keywords
   (let ((sb "\\_<\\(\\(?:\\sw\\|[<>]\\)+\\)\\_>"))
     (list
-     (list (concat "\\(?:" (regexp-opt dafny-defuns 'symbols) "\\s-+\\)+" sb)
+     (list (concat "\\(?:" dafny-defuns-regexp "\\s-+\\)+" sb)
            2 font-lock-function-name-face)
      (list (concat sb "\\s-*" ":" "\\s-*" sb)
            '(1 font-lock-variable-name-face) '(2 font-lock-type-face))
@@ -59,14 +83,17 @@
            1 font-lock-constant-face)
      (list "\\(\\_<forall\\_>\\).*::"
            1 ''(face nil display "∀"))
-     (cons (regexp-opt dafny-defuns 'symbols) font-lock-builtin-face)
-     (cons (regexp-opt dafny-modifiers 'symbols) font-lock-preprocessor-face)
-     (cons (regexp-opt dafny-specifiers 'symbols) font-lock-doc-face)
-     (cons (regexp-opt dafny-builtins 'symbols) font-lock-builtin-face)
-     (cons (regexp-opt dafny-keywords 'symbols) font-lock-keyword-face)
-     (cons (regexp-opt dafny-types 'symbols) font-lock-type-face))))
+     (cons dafny-defuns-regexp font-lock-builtin-face)
+     (cons dafny-modifiers-regexp font-lock-preprocessor-face)
+     (cons dafny-specifiers-regexp font-lock-doc-face)
+     (cons dafny-builtins-regexp font-lock-builtin-face)
+     (cons dafny-keywords-regexp font-lock-keyword-face)
+     (cons dafny-types-regexp font-lock-type-face)))
+  "Font lock specifications for `dafny-mode'.")
 
 (defun dafny-ignore-event (e)
+  "Swallow an event E.
+Useful to ignore mouse-up events handled mouse-down events."
   (interactive "e"))
 
 (defvar dafny-mode-map
@@ -79,7 +106,7 @@
     (define-key map (kbd "<C-down-mouse-1>") 'dafny-click-jump-to-boogie)
     (define-key map (kbd "<backtab>") 'dafny-cycle-indentation)
     map)
-  "Dafny mode's keymap")
+  "Keybindings for `dafny-mode'.")
 
 (defconst dafny-mode-syntax-table
   (let ((tbl (make-syntax-table)))
@@ -89,47 +116,72 @@
     (modify-syntax-entry ?\n ">" tbl)
     (modify-syntax-entry ?/  "  124" tbl)
     (modify-syntax-entry ?*  "  23bn" tbl)
-    tbl))
+    tbl)
+  "Syntax table for `dafny-mode'.")
 
-(defconst dafny-boogie-proc-name "*boogie*")
+(defconst dafny-boogie-proc-name "*dafny-to-boogie*"
+  "Name of the Dafny → Boogie process.")
 
-(defun dafny-buffer-boogie-names ()
-  (-when-let* ((fname (buffer-file-name)))
-    (cons (concat (buffer-name) ".bpl") (concat fname ".bpl"))))
+(defun dafny-boogie-buffer-name ()
+  "Computes a buffer name for the Dafny → Boogie translation."
+  (when (buffer-file-name)
+    (concat (buffer-name) ".bpl")))
+
+(defun dafny-boogie-file-name ()
+  "Computes a filename for the Dafny → Boogie translation."
+  (-when-let (fname buffer-file-name)
+    (concat fname ".bpl")))
 
 (defun dafny-boogie-filter (proc string)
+  "Filter function for the Dafny → Boogie process PROC.
+Inserts STRING at end of buffer.  Does not do automatic
+scrolling."
   (when (buffer-live-p (process-buffer proc))
     (with-current-buffer (process-buffer proc)
-      (let ((inhibit-read-only t))
+      (let ((inhibit-read-only t)
+            (prev-location (point)))
         (save-excursion
           (goto-char (process-mark proc))
           (insert string)
           (set-marker (process-mark proc) (point)))
-        (goto-char (point-min))))))
+        (goto-char (min (point-max) prev-location))))))
 
-(defun dafny-boogie-sentinel (proc sig) ;; Prevent insertion of termination messages
+(defun dafny-boogie-sentinel (proc _sig)
+  "Sentinel function for the Dafny → Boogie process PROC.
+Saves the buffer upon completion of the process, and prevents the insertion
+of a termination message after the conversion completes."
   (when (buffer-live-p (process-buffer proc))
     (with-current-buffer (process-buffer proc)
       (when buffer-file-name (save-buffer)))
     (message (substitute-command-keys "Use \\[dafny-jump-to-boogie] or \\[dafny-click-jump-to-boogie] (Ctrl+Click) to jump to the Boogie buffer."))))
 
+(defun dafny-get-buffer-unless-rw (buf-name)
+  "Convenience wrapper around `get-buffer-create'.
+Throws if a buffer of name BUF-NAME already exists and is not read-only;
+otherwise, returns that buffer, or a newly created one of that
+name is none is found."
+  (-when-let* ((buffer (get-buffer buf-name)))
+    (when (not (with-current-buffer buffer buffer-read-only))
+      (error "Buffer %s already exists and is not read-only.  Cowardly refusing to overwrite it" buf-name)))
+  (get-buffer-create buf-name))
+
 (defun dafny-show-boogie-source ()
+  "Translate to Boogie, save the resulting file, and display it."
   (interactive)
   (let ((buf (current-buffer)))
     (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
   (-when-let* ((dfy-name  buffer-file-name)
-               (bpl-names (dafny-buffer-boogie-names))
-               (buf       (get-buffer-create (car bpl-names)))
+               (buf-name  (dafny-boogie-buffer-name))
+               (buf       (dafny-get-buffer-unless-rw buf-name))
                (command   (list (flycheck-checker-executable 'dafny) dfy-name "/nologo" "/print:-" "/noVerify")))
     (-when-let ((proc (get-buffer-process buf)))
-      (ignore-errors (kill-process proc)
-                     (accept-process-output)))
+      (ignore-errors (kill-process proc) (accept-process-output)))
     (with-current-buffer buf
       (buffer-disable-undo)
       (let ((inhibit-read-only t))
         (erase-buffer)
         (insert (format "// %s\n" (mapconcat #'identity command " "))))
-      (setq buffer-file-name (cdr bpl-names))
+      (setq buffer-file-name (dafny-boogie-file-name))
       (boogie-mode)
       (read-only-mode))
     (display-buffer buf)
@@ -140,21 +192,13 @@
                   :sentinel #'dafny-boogie-sentinel)))
 
 (defun dafny-backward-line ()
+  "Jump one line backwards, and then skip over blank lines."
   (forward-line 0)
   (skip-chars-backward "\r\n\t "))
 
-;; (defun dafny-real-line-contents ()
-;;   (save-excursion
-;;     (let ((eol (point-at-eol)))
-;;       (cl-loop do (beginning-of-line)
-;;                for cb = (comment-beginning)
-;;                while cb do (goto-char cb))
-;;       (cl-loop do (cl-loop do (skip-chars-forward " \t")
-;;                            while (not (eq (point) (progn (comment-forward) (point)))))
-;;                while (< (point) eol)
-;;                collect (buffer-substring-no-properties (point) (goto-char (or (comment-search-forward eol t) eol)))))))
-
 (defun dafny-cycle-indentation (&optional rev)
+  "Cycle between reasonable indentation values for current line.
+If REV is non-nil, cycle in the reverse order."
   (interactive)
   (let ((cur  (current-indentation))
         (prev (save-excursion (dafny-backward-line) (current-indentation))))
@@ -162,29 +206,8 @@
         (indent-line-to (if (= cur 0) (indent-next-tab-stop prev) (indent-next-tab-stop cur rev)))
       (indent-line-to (if (> cur prev) 0 (indent-next-tab-stop cur rev))))))
 
-;; (defun dafny-cycle-indentation-rev ()
-;;   (interactive)
-;;   (dafny-cycle-indentation t))
-
-;; (defun dafny-count (what from to)
-;;   (save-excursion
-;;     (save-match-data
-;;       (goto-char from)
-;;       (cl-loop while (search-forward what to t) sum 1))))
-
-;; (defun dafny-line-indentedness ()
-;;   (- (dafny-count "{" (point-at-bol) (point-at-eol))
-;;      (dafny-count "}" (point-at-bol) (point-at-eol))))
-
-(defconst dafny-defun-regexp    (concat "\\s-*\\(" (regexp-opt dafny-modifiers 'symbols) "\\)*"
-                                        "\\s-*"    (regexp-opt dafny-defuns    'symbols)))
-
-(defconst dafny-block-heads '("while" "if" "else" "match" "calc"))
-
-(defconst dafny-block-hd-regexp (concat "\\s-*\\(" (regexp-opt dafny-modifiers 'symbols) "\\)*"
-                                        "\\s-*"    (regexp-opt (append dafny-block-heads dafny-defuns) 'symbols)))
-
 (defun dafny-line-props ()
+  "Classifies the current line (for indentation)."
   (save-excursion
     (beginning-of-line)
     (cons (cond ((or (comment-beginning) (looking-at-p "\\s-*/[/*]")) 'comment)
@@ -192,18 +215,19 @@
                 ((looking-at-p ".*{\\s-*\\(//.*\\)?$")                'open)
                 ((looking-at-p ".*}\\s-*\\(//.*\\)?$")                'close)
                 ((looking-at-p ".*;\\s-*\\(//.*\\)?$")                'semicol)
-                ((looking-at-p dafny-defun-regexp)                    'defun)
+                ((looking-at-p dafny-extended-defun-regexp)           'defun)
                 (t                                                    'none))
           (current-indentation))))
 
 (defun dafny-indent ()
+  "Indent current line."
   (interactive)
   (beginning-of-line)
   (let* ((pprev-type  (car (save-excursion (dafny-backward-line) (dafny-backward-line) (dafny-line-props))))
          (prev-props  (save-excursion (dafny-backward-line) (dafny-line-props)))
          (prev-type   (car prev-props))
          (prev-offset (cdr prev-props))
-         (is-defun    (looking-at-p dafny-defun-regexp))
+         (is-defun    (looking-at-p dafny-extended-defun-regexp))
          (is-close    (looking-at-p "[^{\n]*}"))
          (is-lonely-open (looking-at-p "[ \t]*{"))
          (is-case    (looking-at-p "[ \t]*case"))
@@ -221,7 +245,7 @@
               ;; Find beginning of block head (the head can span multiple lines)
               (let ((bound (save-excursion (re-search-backward "[{}]" nil t))))
                 ;; The bound ensures that brackets headerless blocks are indented properly
-                (re-search-backward (concat "^\\s-*}?" dafny-block-hd-regexp) bound t))
+                (re-search-backward (concat "^\\s-*}?" dafny-extended-block-head-regexp) bound t))
               (current-indentation)))
            (is-defun (if (memq prev-type '(open)) (indent-next-tab-stop prev-offset) prev-offset))
            (is-case (or (indent-next-tab-stop (save-excursion ;; Find the parent match
@@ -238,8 +262,12 @@
   (skip-chars-forward " "))
 
 (defun dafny-jump-to-boogie-internal (line &optional buffer)
-  (-when-let* ((buffer         (or buffer (let ((bpl-fname (cdr-safe (dafny-buffer-boogie-names))))
-                                            (when bpl-fname (find-buffer-visiting bpl-fname)))))
+  "Jump to translation of LINE in boogie buffer BUFFER.
+Attemps to guess the right buffer if BUFFER is nil.  If unable to
+find references to LINE, look for references to neighbouring
+lines."
+  (-when-let* ((buffer         (or buffer (-when-let* ((bpl-fname (dafny-boogie-file-name)))
+                                            (find-buffer-visiting bpl-fname))))
                (window         (display-buffer buffer))
                ((dest . delta) (with-current-buffer buffer
                                  (let ((case-fold-search t))
@@ -255,9 +283,16 @@
         (recenter)))
     delta))
 
-(defvar-local dafny-jump-overlay nil)
+(defvar-local dafny-jump-overlay nil
+  "Temporary highlighting of a line matching a Boogie position.
+See `dafny-jump-to-boogie'.")
 
 (defun dafny-jump-to-boogie (line &optional buffer)
+  "Jump to the Boogie location matching LINE.
+Interactively, LINE is the current line.  BUFFER is the Boogie
+buffer to search.  Since not all lines have a direct counterpart
+in the Boogie file, the line actually matched is briefly
+highlighted."
   (interactive (list (save-restriction (widen) (line-number-at-pos (point))) nil))
   (boogie-friends-clean-overlay 'dafny-jump-overlay)
   (let ((delta (dafny-jump-to-boogie-internal line buffer)))
@@ -269,6 +304,7 @@
     (run-with-timer 0.5 nil #'boogie-friends-clean-overlay 'dafny-jump-overlay (current-buffer))))
 
 (defun dafny-click-jump-to-boogie (event)
+  "Call `dafny-jump-to-boogie' on line under mouse."
   (interactive "e")
   (mouse-set-point event)
   (-when-let* ((window  (posn-window (event-start event)))
@@ -279,6 +315,7 @@
             (dafny-jump-to-boogie (line-number-at-pos (point)) nil))))))
 
 (defun dafny-snippets-doc-buffer (arg)
+  "Show documentation for snippet ARG."
   (-when-let* ((doc-buffer (dafny-docs-open))
                (doc-window (get-buffer-window doc-buffer)))
     (with-current-buffer doc-buffer
@@ -296,7 +333,7 @@
 (flycheck-def-executable-var dafny "dafny")
 
 (flycheck-define-command-checker 'dafny
-  "A Dafny checker."
+  "Flycheck checker for the Dafny programming language."
   :command '("" "/enhancedErrorMessages:1" "/pretty:0" "/compile:0" "/nologo" source)
   :error-patterns boogie-friends-error-patterns
   :modes '(dafny-mode))
@@ -317,7 +354,5 @@
   (set (make-local-variable 'indent-line-function) #'dafny-indent)
   (set (make-local-variable 'indent-region-function) nil)
   (electric-indent-local-mode 1))
-
-;; FIXME warn if checker not found
 
 (provide 'dafny-mode)
