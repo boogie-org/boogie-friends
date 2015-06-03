@@ -47,6 +47,9 @@
   (let ((tbl (make-syntax-table)))
     (modify-syntax-entry ?' "w" tbl)
     (modify-syntax-entry ?_ "w" tbl)
+    (modify-syntax-entry ?# "_" tbl)
+    (modify-syntax-entry ?$ "_" tbl)
+    (modify-syntax-entry ?. "_" tbl)
     ;; Comments
     (modify-syntax-entry ?\n ">" tbl)
     (modify-syntax-entry ?/  "  124" tbl)
