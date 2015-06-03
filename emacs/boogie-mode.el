@@ -17,24 +17,24 @@
   "Extra flags passed to Boogie when compiling with a prefix arg (\\[boogie-friends-verify])")
 
 (defvar boogie-font-lock-keywords
-  (let ((sb "\\(?:\\sw\\|[<>]\\)+"))
+  (let ((sb "\\(?:\\sw\\|\\s_\\|[<>]\\)+"))
     (list
-     (cons "{ [^{\n]+ }"
-           font-lock-preprocessor-face)
-     (list "{:[^{\n]+}"
-           0 font-lock-constant-face 'append)
      (cons "\\_<T[A-Z]\\sw+\\_>"
            font-lock-type-face)
-     (list (concat "\\(\\_<\\(" sb "#" sb "\\|\\$" sb "\\)\\_>\\)(")
-           1 font-lock-function-name-face)
-     (list (concat "\\_<\\(" sb "\\)\\_>" "\\s-*" ":" "\\s-*" "\\_<\\(" sb "\\)\\_>")
-           '(1 font-lock-variable-name-face) '(2 font-lock-type-face))
      (cons (regexp-opt boogie-builtins 'symbols)
            font-lock-builtin-face)
      (cons (regexp-opt boogie-keywords 'symbols)
            font-lock-keyword-face)
      (cons (concat "\\(" (regexp-opt '("bool" "int" "real") 'symbols) "\\)\\|\\(\\_<bv[0-9]+\\_>\\)")
-           font-lock-type-face)))
+           font-lock-type-face)
+     (list (concat "\\(\\_<\\(" sb "\\)\\_>\\)(")
+           '(1 font-lock-function-name-face append))
+     (list (concat "\\_<\\(" sb "\\)\\_>" "\\s-*" ":" "\\s-*" "\\_<\\(" sb "\\)\\_>")
+           '(1 font-lock-variable-name-face) '(2 font-lock-type-face))
+     (list "{:[^{\n]+}"
+           '(0 font-lock-constant-face append))
+     (list "\\({\\s-*\\)\\([^{\n]+?\\)\\(\\s-*}\\)"
+           '(1 font-lock-constant-face) '(2 '(face italic) prepend) '(3 font-lock-constant-face))))
   "Font lock specifications for `boogie-mode'.")
 
 (defvar boogie-mode-map
