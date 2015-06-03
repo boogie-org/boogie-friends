@@ -1,5 +1,39 @@
-;;; -*- lexical-binding: t -*-
-;; boogie-mode.el - Support for Boogie in Emacs
+;;; boogie-mode.el --- Support for the Boogie programming language -*- lexical-binding: t -*-
+
+;; Copyright (C) 2015 Clément Pit--Claudel
+;; Author: Clément Pit--Claudel <clement.pitclaudel@live.com>
+;; URL: https://github.com/boogie-org/boogie-friends/
+
+;; Keywords: convenience, languages
+
+;; This file is not part of GNU Emacs.
+
+;; Permission is hereby granted, free of charge, to any person obtaining a copy
+;; of this software and associated documentation files (the "Software"), to deal
+;; in the Software without restriction, including without limitation the rights
+;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+;; copies of the Software, and to permit persons to whom the Software is
+;; furnished to do so, subject to the following conditions:
+
+;; The above copyright notice and this permission notice shall be included in all
+;; copies or substantial portions of the Software.
+
+;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;; SOFTWARE.
+
+;;; Commentary:
+
+;; See boogie-friends.el
+
+;;; Code:
+
+;; This file contains the implementation of the Boogie part of the
+;; boogie-friends package
 
 (require 'boogie-friends)
 
@@ -19,6 +53,8 @@
 (defvar boogie-font-lock-keywords
   (let ((sb "\\(?:\\sw\\|\\s_\\|[<>]\\)+"))
     (list
+     (cons "!"
+           font-lock-negation-char-face)
      (cons "\\_<T[A-Z]\\sw+\\_>"
            font-lock-type-face)
      (cons (regexp-opt boogie-builtins 'symbols)
@@ -40,6 +76,7 @@
 (defvar boogie-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-c") 'boogie-friends-verify)
+    (define-key map (kbd "<backtab>") 'boogie-friends-cycle-indentation)
     map)
   "Keybindings for `boogie-mode'.")
 
@@ -92,3 +129,4 @@ Existing highlights are suppressed."
   (boogie-friends-mode-setup))
 
 (provide 'boogie-mode)
+;;; boogie-mode.el ends here

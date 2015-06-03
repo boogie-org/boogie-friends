@@ -1,4 +1,56 @@
- ;;; -*- lexical-binding: t -*-
+;;; boogie-friends.el --- Support for the Boogie-related languages in Emacs -*- lexical-binding: t -*-
+
+;; Copyright (C) 2015 Clément Pit--Claudel
+;; Author: Clément Pit--Claudel <clement.pitclaudel@live.com>
+;; URL: https://github.com/boogie-org/boogie-friends/
+
+;; Keywords: convenience, languages
+
+;; This file is not part of GNU Emacs.
+
+;; Permission is hereby granted, free of charge, to any person obtaining a copy
+;; of this software and associated documentation files (the "Software"), to deal
+;; in the Software without restriction, including without limitation the rights
+;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+;; copies of the Software, and to permit persons to whom the Software is
+;; furnished to do so, subject to the following conditions:
+
+;; The above copyright notice and this permission notice shall be included in all
+;; copies or substantial portions of the Software.
+
+;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;; SOFTWARE.
+
+;;; Commentary:
+
+;; This package is a collection of tools for writing verified programs in
+;; languages of the Boogie family. Dafny and Boogie are the two currently
+;; supported languages. Features include:
+;;
+;; * Syntax highlighting
+;; * Real-time compilation (using flycheck)
+;; * Completion (using company)
+;; * Code folding (using hideshow)
+;; * Prettification (using prettify-symbols-mode)
+;;
+;; In addition, the Dafny mode offers:
+;; * (A few) Snippets (using yasnippet)
+;; * (Some) In-Emacs documentation (using shr)
+;; * (Experimental) Navigation between Dafny and Boogie source files
+;; * (Some support for) indentation
+;; * (Some support for) jumping to a definition
+;;
+;; See https://github.com/boogie-org/boogie-friends/ for a full description.
+
+;;; Code:
+
+;; This file is a collection of convenient definitions and utilies for the
+;; various programming modes that this package offers.
 
 (require 'flycheck)
 (require 'company)
@@ -8,7 +60,7 @@
 (require 'compile)
 
 (defconst boogie-friends-directory (file-name-directory load-file-name)
-  "Base directory of this package")
+  "Base directory of this package.")
 
 (defconst boogie-friends-symbols-alist '(("<=" . ?≤) (">=" . ?≥) ("!=" . ?≠) (":=" . ?≔)
                                          ("&&" . ?∧) ("||" . ?∨) ("=>" . ?⇒)
@@ -91,8 +143,23 @@ If SET-POINT, place the point where EVENT points to."
      (when ,set-point
        (mouse-set-point ,event))))
 
+(defun boogie-friends-backward-line ()
+  "Jump one line backwards, and then skip over blank lines."
+  (forward-line 0)
+  (skip-chars-backward "\r\n\t "))
+
+(defun boogie-friends-cycle-indentation (&optional rev)
+  "Cycle between reasonable indentation values for current line.
+If REV is non-nil, cycle in the reverse order."
+  (interactive)
+  (let ((cur  (current-indentation))
+        (prev (save-excursion (boogie-friends-backward-line) (current-indentation))))
+    (if rev
+        (indent-line-to (if (= cur 0) (indent-next-tab-stop prev) (indent-next-tab-stop cur rev)))
+      (indent-line-to (if (> cur prev) 0 (indent-next-tab-stop cur rev))))))
+
 (defun boogie-friends-keywords (command &optional arg &rest ignored)
-  "A company-mode backend for keywords."
+  "A boogie-mode backend for keywords."
   (interactive (list 'interactive))
   (pcase command
     (`interactive (company-begin-backend 'boogie-friends-keywords))
@@ -140,7 +207,7 @@ Matching is fuzzy."
     doc-buffer))
 
 (defun boogie-friends-snippets (command &optional arg &rest ignored)
-  "A company-mode backend for snippets."
+  "A boogie-mode backend for snippets."
   (interactive (list 'interactive))
   (pcase command
     (`interactive (company-begin-backend 'boogie-friends-snippets))
@@ -235,3 +302,4 @@ Uses `boogie-friends-mode-name' as the name of the checker."
   (run-hooks 'boogie-friends-hook))
 
 (provide 'boogie-friends)
+;;; boogie-friends.el ends here

@@ -1,4 +1,39 @@
-;; dafny-mode.el - Support for Dafny in Emacs
+;;; dafny-mode.el --- Support for the Dafny programming language -*- lexical-binding: t -*-
+
+;; Copyright (C) 2015 Clément Pit--Claudel
+;; Author: Clément Pit--Claudel <clement.pitclaudel@live.com>
+;; URL: https://github.com/boogie-org/boogie-friends/
+
+;; Keywords: convenience, languages
+
+;; This file is not part of GNU Emacs.
+
+;; Permission is hereby granted, free of charge, to any person obtaining a copy
+;; of this software and associated documentation files (the "Software"), to deal
+;; in the Software without restriction, including without limitation the rights
+;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+;; copies of the Software, and to permit persons to whom the Software is
+;; furnished to do so, subject to the following conditions:
+
+;; The above copyright notice and this permission notice shall be included in all
+;; copies or substantial portions of the Software.
+
+;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;; SOFTWARE.
+
+;;; Commentary:
+
+;; See boogie-friends.el
+
+;;; Code:
+
+;; This file contains the implementation of the Dafny part of the
+;; boogie-friends package
 
 (require 'boogie-friends)
 (require 'boogie-mode)
@@ -54,7 +89,7 @@
 (defun dafny-init-snippets (&optional force-reload interactive)
   "Initialize and return `dafny-snippets'.
 Reloading only happens if `dafny-snippets' is nil or if
-FORCE-RELOAD is non-nil. A non-nil INTERACTIVE value suppresses
+FORCE-RELOAD is non-nil.  A non-nil INTERACTIVE value suppresses
 the return value."
   (interactive '(t t))
   (setq dafny-snippets
@@ -106,7 +141,7 @@ Useful to ignore mouse-up events handled mouse-down events."
     (define-key map (kbd "<C-S-mouse-1>") 'dafny-ignore-event)
     (define-key map (kbd "<C-down-mouse-1>") 'dafny-click-find-definition)
     (define-key map (kbd "<C-S-down-mouse-1>") 'dafny-click-jump-to-boogie)
-    (define-key map (kbd "<backtab>") 'dafny-cycle-indentation)
+    (define-key map (kbd "<backtab>") 'boogie-friends-cycle-indentation)
     map)
   "Keybindings for `dafny-mode'.")
 
@@ -193,21 +228,6 @@ name is none is found."
                   :filter #'dafny-boogie-filter
                   :sentinel #'dafny-boogie-sentinel)))
 
-(defun dafny-backward-line ()
-  "Jump one line backwards, and then skip over blank lines."
-  (forward-line 0)
-  (skip-chars-backward "\r\n\t "))
-
-(defun dafny-cycle-indentation (&optional rev)
-  "Cycle between reasonable indentation values for current line.
-If REV is non-nil, cycle in the reverse order."
-  (interactive)
-  (let ((cur  (current-indentation))
-        (prev (save-excursion (dafny-backward-line) (current-indentation))))
-    (if rev
-        (indent-line-to (if (= cur 0) (indent-next-tab-stop prev) (indent-next-tab-stop cur rev)))
-      (indent-line-to (if (> cur prev) 0 (indent-next-tab-stop cur rev))))))
-
 (defun dafny-line-props ()
   "Classifies the current line (for indentation)."
   (save-excursion
@@ -225,8 +245,8 @@ If REV is non-nil, cycle in the reverse order."
   "Indent current line."
   (interactive)
   (beginning-of-line)
-  (let* ((pprev-type  (car (save-excursion (dafny-backward-line) (dafny-backward-line) (dafny-line-props))))
-         (prev-props  (save-excursion (dafny-backward-line) (dafny-line-props)))
+  (let* ((pprev-type  (car (save-excursion (boogie-friends-backward-line) (boogie-friends-backward-line) (dafny-line-props))))
+         (prev-props  (save-excursion (boogie-friends-backward-line) (dafny-line-props)))
          (prev-type   (car prev-props))
          (prev-offset (cdr prev-props))
          (is-defun    (looking-at-p dafny-extended-defun-regexp))
@@ -369,3 +389,4 @@ open Dafny buffers."
   (electric-indent-local-mode 1))
 
 (provide 'dafny-mode)
+;;; dafny-mode.el ends here
