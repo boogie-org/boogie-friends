@@ -126,7 +126,7 @@ the return value."
      (cons dafny-types-regexp font-lock-type-face)))
   "Font lock specifications for `dafny-mode'.")
 
-(defun dafny-ignore-event (e)
+(defun dafny-ignore-event (_e)
   "Swallow an event E.
 Useful to ignore mouse-up events handled mouse-down events."
   (interactive "e"))
@@ -328,18 +328,17 @@ highlighted."
     (error "No location found for line %d" line)))
 
 (defun dafny-click-find-definition (event)
-  "Find definitions of symbol at mouse.
+  "Find definitions of symbol under mouse pointer.
 Symbol at point must be a function name. Search is restricted to
 open Dafny buffers."
-  (interactive "e")
+  (interactive "e") ;; FIXME would be much better to only show the lines below the definition
   (boogie-friends-with-click event 'dafny-mode nil
     (-when-let* ((fun-name (thing-at-point 'symbol)))
-      (let ((match nil))
-        (occur-1 (concat "^" dafny-extended-defun-regexp "\\s-*\\_<" (regexp-quote fun-name) "\\_>") 5
-                 (cl-loop for b being the buffers when (string-match-p "\\.dfy\\'" (buffer-name b)) collect b))
-        (-when-let* ((buf (get-buffer "*Occur*")))
-          (with-current-buffer buf
-            (face-remap-add-relative 'match nil)))))))
+      (occur-1 (concat "^" dafny-extended-defun-regexp "\\s-*\\_<" (regexp-quote fun-name) "\\_>") 3
+               (cl-loop for b being the buffers when (string-match-p "\\.dfy\\'" (buffer-name b)) collect b))
+      (-when-let* ((buf (get-buffer "*Occur*")))
+        (with-current-buffer buf
+          (face-remap-set-base 'match '(:weight bold :inverse-video t)))))))
 
 (defun dafny-click-jump-to-boogie (event)
   "Call `dafny-jump-to-boogie' on line under mouse."
