@@ -5,6 +5,7 @@
 (require 'yasnippet)
 (require 'hideshow)
 (require 'paren)
+(require 'compile)
 
 (defconst boogie-friends-directory (file-name-directory load-file-name)
   "Base directory of this package")
@@ -32,13 +33,21 @@
 Use this hook to alter settings common to Dafny and Boogie, such
 as prettification.")
 
-(defun boogie-friends-verify ()
-  (interactive)
-  "Manually check the current file for errors."
+(defun boogie-friends-verify (&optional arg)
+  "Manually check the current file for errors. With prefix ARG, run the alternative checker if it exists."
+  (interactive "P")
   (let ((buf (current-buffer)))
     (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
   (unless (buffer-modified-p)
-    (flycheck-compile (intern (boogie-friends-mode-name)))))
+    (let* ((checker      (intern (boogie-friends-mode-name)))
+           (extra-args-v (boogie-friends-mode-var 'checker-extra-args))
+           (extra-args   (and (consp arg) (boundp extra-args-v) (eval (symbol-value extra-args-v))))
+           (command      (concat (flycheck-checker-shell-command checker) " "
+                                 (mapconcat #'shell-quote-argument extra-args " ")))
+           (buffer       (compilation-start command nil)))
+      (with-current-buffer buffer
+        (set (make-local-variable 'compilation-error-regexp-alist)
+             (flycheck-checker-compilation-error-regexp-alist checker))))))
 
 (defun boogie-friends-format-header (err)
   "Format the first line of a Flycheck error ERR."

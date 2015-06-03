@@ -12,6 +12,10 @@
 (defconst boogie-all-keywords (cl-loop for source in '(boogie-builtins boogie-keywords)
                                             append (mapcar (lambda (kwd) (propertize kwd 'source source)) (symbol-value source))))
 
+(defconst boogie-checker-extra-args
+  '(list "/z3opt:TRACE=true") ; (concat "/z3opt:TRACE_FILE_NAME='" (or buffer-file-name "log") "-z3.log'"))
+  "Extra flags passed to Boogie when compiling with a prefix arg (\\[boogie-friends-verify])")
+
 (defvar boogie-font-lock-keywords
   (let ((sb "\\(?:\\sw\\|[<>]\\)+"))
     (list
@@ -56,8 +60,8 @@
 (flycheck-def-executable-var boogie "boogie")
 
 (flycheck-define-command-checker 'boogie
-  "Flycheck checker for the Dafny programming language."
-  :command '("" "/nologo" "/abbrevOutput" source)
+  "Flycheck checker for the Boogie programming language."
+  :command '("" "/nologo" source)
   :error-patterns boogie-friends-error-patterns
   :modes '(boogie-mode))
 

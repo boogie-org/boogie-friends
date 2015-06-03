@@ -103,6 +103,7 @@ Useful to ignore mouse-up events handled mouse-down events."
     (define-key map (kbd "C-c C-j") 'dafny-jump-to-boogie)
     (define-key map (kbd "C-c C-?") 'dafny-docs-open) ;; TODO enable by default?
     (define-key map (kbd "<C-mouse-1>") 'dafny-ignore-event)
+    (define-key map (kbd "<C-S-mouse-1>") 'dafny-ignore-event)
     (define-key map (kbd "<C-down-mouse-1>") 'dafny-click-find-definition)
     (define-key map (kbd "<C-S-down-mouse-1>") 'dafny-click-jump-to-boogie)
     (define-key map (kbd "<backtab>") 'dafny-cycle-indentation)
@@ -296,13 +297,15 @@ in the Boogie file, the line actually matched is briefly
 highlighted."
   (interactive (list (save-restriction (widen) (line-number-at-pos (point))) nil))
   (boogie-friends-clean-overlay 'dafny-jump-overlay)
-  (let ((delta (dafny-jump-to-boogie-internal line buffer)))
-    (when (/= 0 delta)
-      (message "No location found for line %d. Showing the closest available reference, %d line(s) %s."
-               line (abs delta) (if (> 0 delta) "above" "below")))
-    (setq dafny-jump-overlay (save-excursion (forward-line delta) (make-overlay (point-at-bol) (point-at-eol))))
-    (overlay-put dafny-jump-overlay 'face 'highlight)
-    (run-with-timer 0.5 nil #'boogie-friends-clean-overlay 'dafny-jump-overlay (current-buffer))))
+  (-if-let* ((delta (dafny-jump-to-boogie-internal line buffer)))
+      (progn (when (/= 0 delta)
+               (message "No location found for line %d. Showing the closest available reference, %d line(s) %s."
+                        line (abs delta) (if (> 0 delta) "above" "below")))
+             (setq dafny-jump-overlay (save-excursion (forward-line delta)
+                                                      (make-overlay (point-at-bol) (point-at-eol))))
+             (overlay-put dafny-jump-overlay 'face 'highlight)
+             (run-with-timer 0.5 nil #'boogie-friends-clean-overlay 'dafny-jump-overlay (current-buffer)))
+    (error "No location found for line %d" line)))
 
 (defun dafny-click-find-definition (event)
   "Find definitions of symbol at mouse.
