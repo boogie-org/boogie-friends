@@ -45,7 +45,10 @@
 ;; * (Some support for) indentation
 ;; * (Some support for) jumping to a definition
 ;;
-;; See https://github.com/boogie-org/boogie-friends/ for a full description.
+;; See https://github.com/boogie-org/boogie-friends/ for a full description. The
+;; documentation that accompanies certain snippets in dafny-mode was not written
+;; as part of this package; it is automatically generated from Dafny's quick
+;; reference guide.
 
 ;;; Code:
 
