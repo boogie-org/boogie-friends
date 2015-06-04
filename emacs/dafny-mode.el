@@ -109,7 +109,7 @@ the return value."
            '(1 font-lock-variable-name-face) '(2 font-lock-type-face))
      '("\\_<var\\_>" (0 font-lock-keyword-face)
        ("\\_<\\(?:\\sw\\|\\s_\\)+\\_>"
-        (save-excursion (save-match-data (when (search-forward ":=" (point-at-eol) t) (match-beginning 0)))) nil
+        (save-excursion (save-match-data (when (re-search-forward ":[=|]" (point-at-eol) t) (match-beginning 0)))) nil
         (0 font-lock-variable-name-face)))
      (list (concat "\\(\\(?:" sb ",?\\)+\\)\\s-*" ":=")
            1 font-lock-constant-face)
