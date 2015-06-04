@@ -157,12 +157,14 @@ Useful to ignore mouse-up events handled mouse-down events."
   "Name of the Dafny → Boogie process.")
 
 (defun dafny-boogie-buffer-name ()
-  "Computes a buffer name for the Dafny → Boogie translation."
+  "Computes a buffer name for the Dafny → Boogie translation.
+Call for the Dafny buffer!"
   (when (buffer-file-name)
     (concat (buffer-name) ".bpl")))
 
 (defun dafny-boogie-file-name ()
-  "Computes a filename for the Dafny → Boogie translation."
+  "Computes a filename for the Dafny → Boogie translation.
+Call for the Dafny buffer!"
   (-when-let (fname buffer-file-name)
     (concat fname ".bpl")))
 
@@ -206,16 +208,17 @@ name is none is found."
     (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
   (-when-let* ((dfy-name  buffer-file-name)
                (buf-name  (dafny-boogie-buffer-name))
+               (buf-fname (dafny-boogie-file-name))
                (buf       (dafny-get-buffer-unless-rw buf-name))
                (command   (list (flycheck-checker-executable 'dafny) dfy-name "/nologo" "/print:-" "/noVerify")))
-    (-when-let ((proc (get-buffer-process buf)))
+    (-when-let* ((proc (get-buffer-process buf)))
       (ignore-errors (kill-process proc) (accept-process-output)))
     (with-current-buffer buf
       (buffer-disable-undo)
       (let ((inhibit-read-only t))
         (erase-buffer)
         (insert (format "// %s\n" (mapconcat #'identity command " "))))
-      (setq buffer-file-name (dafny-boogie-file-name))
+      (setq buffer-file-name buf-fname)
       (boogie-mode)
       (read-only-mode))
     (display-buffer buf)
