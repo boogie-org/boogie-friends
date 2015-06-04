@@ -50,25 +50,27 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
 
 ### Setup
 
-```bash
-mkdir -p ~/.emacs.d/lisp/ && cd ~/.emacs.d/lisp/
-git clone https://github.com/boogie-org/boogie-friends
-```
+#### Automatic
 
-Then in your .emacs:
+1. Setup [MELPA](http://melpa.org/#/getting-started)
 
-```elisp
-(add-to-list 'load-path "~/.emacs.d/lisp/boogie-friends/emacs/")
+    In your `.emacs`, add these three lines if you don't have them yet:
 
-(require 'dafny-mode)
-(require 'boogie-mode)
+    ```elisp
+    (require 'package) ;; You might already have this line
+    (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
+    (package-initialize) ;; You might already have this line
+    ```
 
-(defun setup-boogie-friends ()
-  (setq flycheck-dafny-executable "PATH-TO-DAFNY")
-  (setq flycheck-boogie-executable "PATH-TO-BOOGIE"))
+2. Indicate the paths to your Dafny and Boogie installations:
 
-(add-hook 'boogie-friends-hook #'setup-boogie-friends)
-```
+    ```elisp
+    (defun setup-boogie-friends ()
+      (setq flycheck-dafny-executable "PATH-TO-DAFNY")
+      (setq flycheck-boogie-executable "PATH-TO-BOOGIE"))
+
+    (add-hook 'boogie-friends-hook #'setup-boogie-friends)
+    ```
 
 ### Tips
 
@@ -98,3 +100,18 @@ After inserting a snippet, <kbd>TAB</kbd> and <kbd>S-TAB</kbd> navigate the fiel
 The documentation that ships with this package is auto-generated from the [Dafny Quick Reference](http://research.microsoft.com/en-us/projects/dafny/reference.aspx).
 
 ### Pull requests are welcome!
+
+Clone the repo:
+
+```bash
+mkdir -p ~/.emacs.d/lisp/ && cd ~/.emacs.d/lisp/
+git clone https://github.com/boogie-org/boogie-friends
+```
+
+Then in your .emacs (in addition to the stuff above):
+
+```elisp
+(add-to-list 'load-path "~/.emacs.d/lisp/boogie-friends/emacs/")
+(require 'dafny-mode)
+(require 'boogie-mode)
+```
