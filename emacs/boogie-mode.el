@@ -97,7 +97,7 @@
 
 (flycheck-define-command-checker 'boogie
   "Flycheck checker for the Boogie programming language."
-  :command '("" "/nologo" source)
+  :command '("boogie" "/nologo" source)
   :error-patterns boogie-friends-error-patterns
   :modes '(boogie-mode))
 

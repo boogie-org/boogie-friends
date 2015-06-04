@@ -361,7 +361,7 @@ open Dafny buffers."
 
 (flycheck-define-command-checker 'dafny
   "Flycheck checker for the Dafny programming language."
-  :command '("" "/enhancedErrorMessages:1" "/pretty:0" "/compile:0" "/nologo" source)
+  :command '("dafny" "/enhancedErrorMessages:1" "/pretty:0" "/compile:0" "/nologo" source)
   :error-patterns boogie-friends-error-patterns
   :modes '(dafny-mode))
 
