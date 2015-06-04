@@ -44,11 +44,11 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
 
 ![Dafny docs](emacs/pictures/dafny-docs.png)
 
-#### Browsing the Boogie representation
+#### Browsing the Boogie translation of a Dafny file
 
 ![Dafny buffer in Emacs](emacs/pictures/dafny-to-boogie.png)
 
-### Setup:
+### Setup
 
 ```bash
 mkdir -p ~/.emacs.d/lisp/ && cd ~/.emacs.d/lisp/
@@ -70,6 +70,31 @@ Then in your .emacs:
 (add-hook 'boogie-friends-hook #'setup-boogie-friends)
 ```
 
+### Tips
+
+* Completion, indentation, snippets and syntax coloring should work out of the box.
+* Real-time error highlighting is enabled by default. You can disable it by adding
+  (add `(flycheck-mode -1)` before the last parens of `setup-boogie-friends` above to disable it).
+
+### Keybindings
+
+#### Dafny mode
+
+<kbd>TAB</kbd> auto-indents.
+<kbd>C-c C-?</kbd> opens the Dafny docs.
+<kbd>C-down-mouse-1</kbd> looks for the definition of the function under point in open buffers.
+<kbd>C-c C-a</kbd> translates the current file to Boogie and shows the translated file.
+<kbd>C-c C-j</kbd> or <kbd>C-S-down-mouse-1</kbd> (aka <kbd>Ctrl-Shift-Click</kbd>) jumps to the closest matching location int the Boogie buffer.
+
+After inserting a snippet, <kbd>TAB</kbd> and <kbd>S-TAB</kbd> navigate the fields. During completion, <kbd>C-h</kbd> shows documentation for the current snippet, if available.
+
+#### All modes
+
+<kbd>S-TAB</kbd> (aka <kbd><backtab></kbd> aka <kbd>Shift-Tab</kbd>) manually cycles through reasonable indentation levels
+<kbd>C-c C-c</kbd> re-verifies the current file.
+
 ### Acknowledgments
 
 The documentation that ships with this package is auto-generated from the [Dafny Quick Reference](http://research.microsoft.com/en-us/projects/dafny/reference.aspx).
+
+### Pull requests are welcome!
