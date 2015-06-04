@@ -15,8 +15,8 @@
 ;; copies of the Software, and to permit persons to whom the Software is
 ;; furnished to do so, subject to the following conditions:
 
-;; The above copyright notice and this permission notice shall be included in all
-;; copies or substantial portions of the Software.
+;; The above copyright notice and this permission notice shall be included in
+;; all copies or substantial portions of the Software.
 
 ;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 ;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -32,8 +32,8 @@
 
 ;;; Code:
 
-;; This file contains the implementation of the Dafny part of the
-;; boogie-friends package
+;; This file contains the implementation of the Dafny part of the boogie-friends
+;; package
 
 (require 'boogie-friends)
 (require 'boogie-mode)
@@ -46,22 +46,19 @@
 
 (defconst dafny-modifiers '("abstract" "ghost" "protected" "static"))
 
-(defconst dafny-builtins '("var" "module" "import" "default" "as" "opened"
-                           "include" "extends" "refines" "returns" "yields"))
+(defconst dafny-builtins '("as" "default" "extends" "import" "include" "module" "opened" "refines" "returns" "var" "yields"))
 
-(defconst dafny-keywords '("assert" "assume" "break" "else" "if" "label" "return" "then" "yield"
-                           "print" "where" "while"
-                           "calc" "exists" "forall" "fresh" "in" "modify" "new" "old" "this"
-                           "case" "false" "match" "null" "true"))
+(defconst dafny-keywords '("assert" "assume" "break" "calc" "case" "else" "exists" "false" "forall" "fresh" "if"
+                           "in" "label" "match" "modify" "new" "null" "old" "print" "return" "then" "this"
+                           "true" "where" "while" "yield"))
 
-(defconst dafny-types '("array" "array2" "array3" "bool" "char"
-                        "imap" "int" "map" "multiset" "nat" "object"
+(defconst dafny-types '("array" "array2" "array3" "bool" "char" "imap" "int" "iset" "map" "multiset" "nat" "object"
                         "real" "seq" "set" "string"))
 
-(defconst dafny-block-heads '("while" "if" "else" "match" "calc"))
+(defconst dafny-block-heads '("calc" "else" "if" "match" "while"))
 
 (defconst dafny-all-keywords (cl-loop for source in '(dafny-defuns dafny-specifiers dafny-modifiers
-                                                                   dafny-builtins dafny-keywords dafny-types)
+                                                      dafny-builtins dafny-keywords dafny-types)
                                       append (mapcar (lambda (kwd) (propertize kwd 'source source)) (symbol-value source))))
 
 (defconst dafny-defuns-regexp     (regexp-opt dafny-defuns 'symbols))

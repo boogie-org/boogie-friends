@@ -15,8 +15,8 @@
 ;; copies of the Software, and to permit persons to whom the Software is
 ;; furnished to do so, subject to the following conditions:
 
-;; The above copyright notice and this permission notice shall be included in all
-;; copies or substantial portions of the Software.
+;; The above copyright notice and this permission notice shall be included in
+;; all copies or substantial portions of the Software.
 
 ;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 ;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -40,11 +40,11 @@
 (defconst boogie-builtins '("axiom" "complete" "const" "ensures" "extends" "free" "function" "implementation"
                             "invariant" "modifies" "procedure" "requires" "returns" "type" "unique" "var" "where"))
 
-(defconst boogie-keywords '("assert" "assume" "break" "call" "then" "else" "havoc" "if" "goto" "return" "while"
-                            "old" "forall" "exists" "lambda" "cast" "div" "mod" "false" "true"))
+(defconst boogie-keywords '("assert" "assume" "break" "call" "cast" "div" "else" "exists" "false" "forall" "goto"
+                            "havoc" "if" "lambda" "mod" "old" "return" "then" "true" "while"))
 
 (defconst boogie-all-keywords (cl-loop for source in '(boogie-builtins boogie-keywords)
-                                            append (mapcar (lambda (kwd) (propertize kwd 'source source)) (symbol-value source))))
+                                       append (mapcar (lambda (kwd) (propertize kwd 'source source)) (symbol-value source))))
 
 (defconst boogie-checker-extra-args
   '(list "/z3opt:TRACE=true") ; (concat "/z3opt:TRACE_FILE_NAME='" (or buffer-file-name "log") "-z3.log'"))
