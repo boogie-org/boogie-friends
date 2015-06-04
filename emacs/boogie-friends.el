@@ -319,9 +319,10 @@ Uses `boogie-friends-mode-name' as the name of the checker."
   (add-to-list 'company-transformers #'boogie-friends-sort-completion-candidates)
   (add-to-list (make-local-variable 'company-backends) boogie-friends-ordered-backends)
   (boogie-friends-setup-prettify)
+  (company-mode)
   (yas-minor-mode)
-  (show-paren-mode)
   (hs-minor-mode)
+  (show-paren-mode)
   (boogie-friends-setup-flycheck)
   (run-hooks 'boogie-friends-hook))
 

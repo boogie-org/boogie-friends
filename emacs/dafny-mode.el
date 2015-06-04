@@ -77,7 +77,7 @@
   "IDE extensions for the Dafny programming language."
   :group 'languages)
 
-(defcustom dafny-snippets-repo "dafny-snippets"
+(defcustom dafny-snippets-repo "etc/dafny-snippets"
   "Name of file holding Dafny snippets.")
 
 (defconst dafny-snippets nil
@@ -91,7 +91,7 @@ the return value."
   (interactive '(t t))
   (setq dafny-snippets
         (or (and (not force-reload) dafny-snippets)
-            (let* ((docs-fname (expand-file-name "dafny-snippets" boogie-friends-directory))
+            (let* ((docs-fname (expand-file-name dafny-snippets-repo boogie-friends-directory))
                    (snippets (with-temp-buffer (insert-file-contents docs-fname) (buffer-string))))
               (cl-loop for index = 0 then (1+ index)
                        for line in (split-string snippets "\n\n" t)

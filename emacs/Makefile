@@ -1,6 +1,6 @@
 EMACS ?= emacs
 SANDBOX ?= ./sandbox
-PACKAGE := $(shell $(EMACS) -Q --batch -l etc/package-name.el -f my-package-version)
+PACKAGE := $(shell $(EMACS) -Q --batch -l scripts/package-name.el -f my-package-version)
 
 elc:
 	$(EMACS) -q -l package -f package-initialize \
@@ -11,13 +11,13 @@ clean-elc:
 	rm -rf *.elc
 
 dafny-docs.html: rebuild-dafny-docs.py
-	python3 ./rebuild-dafny-docs.py
+	python3 ./scripts/rebuild-dafny-docs.py
 
 package-contents: clean-elc elc dafny-docs.html
 
 package: clean-package package-contents
 	mkdir -p build/$(PACKAGE)
-	cp -R *.el dafny-snippets dafny-docs.html build/$(PACKAGE)
+	cp -R *.el etc/ build/$(PACKAGE)
 	cd build && tar -cf $(PACKAGE).tar $(PACKAGE)
 
 clean-package:
@@ -25,7 +25,7 @@ clean-package:
 
 sandbox: clean-sandbox package
 	mkdir -p $(SANDBOX)
-	$(EMACS) -Q --eval '(setq user-emacs-directory "$(SANDBOX)")' -l etc/sandbox-setup.el
+	$(EMACS) -Q --eval '(setq user-emacs-directory "$(SANDBOX)")' -l scripts/sandbox-setup.el
 
 clean-sandbox:
 	rm -rf $(SANDBOX)

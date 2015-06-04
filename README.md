@@ -86,7 +86,7 @@ Then in your .emacs:
 <kbd>C-c C-a</kbd> translates the current file to Boogie and shows the translated file.
 <kbd>C-c C-j</kbd> or <kbd>C-S-down-mouse-1</kbd> (aka <kbd>Ctrl-Shift-Click</kbd>) jumps to the closest matching location int the Boogie buffer.
 
-After inserting a snippet, <kbd>TAB</kbd> and <kbd>S-TAB</kbd> navigate the fields. During completion, <kbd>C-h</kbd> shows documentation for the current snippet, if available.
+After inserting a snippet, <kbd>TAB</kbd> and <kbd>S-TAB</kbd> navigate the fields, and <kbd>C-d</kbd> removes the current field entirely. During completion, <kbd>C-h</kbd> shows documentation for the current snippet, if available.
 
 #### All modes
 
