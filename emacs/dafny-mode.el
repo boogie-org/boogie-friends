@@ -120,7 +120,8 @@ the return value."
      (cons dafny-specifiers-regexp font-lock-doc-face)
      (cons dafny-builtins-regexp font-lock-builtin-face)
      (cons dafny-keywords-regexp font-lock-keyword-face)
-     (cons dafny-types-regexp font-lock-type-face)))
+     (cons dafny-types-regexp font-lock-type-face)
+     (cons "!" font-lock-negation-char-face)))
   "Font lock specifications for `dafny-mode'.")
 
 (defun dafny-ignore-event (_e)
