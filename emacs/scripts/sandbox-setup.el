@@ -6,6 +6,5 @@
 
 (package-initialize)
 (package-refresh-contents)
-(package-install-file (expand-file-name (concat my-package-version ".tar") "build"))
 
 (setq garbage-collection-messages t)

@@ -25,7 +25,13 @@ clean-package:
 
 sandbox: clean-sandbox package
 	mkdir -p $(SANDBOX)
-	$(EMACS) -Q --eval '(setq user-emacs-directory "$(SANDBOX)")' -l scripts/sandbox-setup.el
+	$(EMACS) -Q --eval '(setq user-emacs-directory "$(SANDBOX)")' -l scripts/sandbox-setup.el \
+	            --eval '(package-install-file (expand-file-name (concat my-package-version ".tar") "build"))'
+
+melpa: clean-sandbox
+	mkdir -p $(SANDBOX)
+	$(EMACS) -Q --eval '(setq user-emacs-directory "$(SANDBOX)")' -l scripts/sandbox-setup.el \
+	            --eval "(package-install 'boogie-friends)"
 
 clean-sandbox:
 	rm -rf $(SANDBOX)
