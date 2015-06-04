@@ -46,11 +46,11 @@
 
 (defconst dafny-modifiers '("abstract" "ghost" "protected" "static"))
 
-(defconst dafny-builtins '("as" "default" "extends" "import" "include" "module" "opened" "refines" "returns" "var" "yields"))
+(defconst dafny-builtins '("as" "default" "extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
 
 (defconst dafny-keywords '("assert" "assume" "break" "calc" "case" "else" "exists" "false" "forall" "fresh" "if"
                            "in" "label" "match" "modify" "new" "null" "old" "print" "return" "then" "this"
-                           "true" "where" "while" "yield"))
+                           "true" "var" "where" "while" "yield"))
 
 (defconst dafny-types '("array" "array2" "array3" "bool" "char" "imap" "int" "iset" "map" "multiset" "nat" "object"
                         "real" "seq" "set" "string"))
@@ -100,28 +100,22 @@ the return value."
                        collect (propertize cleaned 'index index 'snippet trimmed)))))
   (unless interactive dafny-snippets))
 
-(defconst dafny-font-lock-keywords
-  (let ((sb "\\_<\\(\\(?:\\sw\\|[<>]\\)+\\)\\_>"))
-    (list
-     (list (concat "\\(?:" dafny-defuns-regexp "\\s-+\\)+" sb)
-           2 font-lock-function-name-face)
-     (list (concat sb "\\s-*" ":" "\\s-*" sb)
-           '(1 font-lock-variable-name-face) '(2 font-lock-type-face))
-     '("\\_<var\\_>" (0 font-lock-keyword-face)
-       ("\\_<\\(?:\\sw\\|\\s_\\)+\\_>"
-        (save-excursion (save-match-data (when (re-search-forward ":[=|]" (point-at-eol) t) (match-beginning 0)))) nil
-        (0 font-lock-variable-name-face)))
-     (list (concat "\\(\\(?:" sb ",?\\)+\\)\\s-*" ":=")
-           1 font-lock-constant-face)
-     (list "\\(\\_<forall\\_>\\).*::"
-           1 ''(face nil display "∀"))
-     (cons dafny-defuns-regexp font-lock-builtin-face)
-     (cons dafny-modifiers-regexp font-lock-preprocessor-face)
-     (cons dafny-specifiers-regexp font-lock-doc-face)
-     (cons dafny-builtins-regexp font-lock-builtin-face)
-     (cons dafny-keywords-regexp font-lock-keyword-face)
-     (cons dafny-types-regexp font-lock-type-face)
-     (cons "!" font-lock-negation-char-face)))
+(defconst dafny-font-lock-keywords ;; FIXME type constraints
+  (list
+   (list #'boogie-friends-mark-font-lock-assignment-chain
+         1 font-lock-variable-name-face)
+   (list (concat "\\(?:" dafny-defuns-regexp "\\s-+\\)+" boogie-friends-font-lock-var)
+         2 font-lock-function-name-face)
+   (list (concat boogie-friends-font-lock-var "\\s-*" ":" "\\s-*" boogie-friends-font-lock-type)
+         '(1 font-lock-variable-name-face) '(2 font-lock-type-face prepend))
+   (list "\\(\\_<forall\\_>\\).*::" 1 ''(face nil display "∀"))
+   (cons dafny-defuns-regexp font-lock-builtin-face)
+   (cons dafny-modifiers-regexp font-lock-preprocessor-face)
+   (cons dafny-specifiers-regexp font-lock-doc-face)
+   (cons dafny-builtins-regexp font-lock-builtin-face)
+   (cons dafny-keywords-regexp font-lock-keyword-face)
+   (cons dafny-types-regexp font-lock-type-face)
+   (cons "!" font-lock-negation-char-face))
   "Font lock specifications for `dafny-mode'.")
 
 (defun dafny-ignore-event (_e)

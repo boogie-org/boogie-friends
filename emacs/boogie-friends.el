@@ -88,6 +88,27 @@
 Use this hook to alter settings common to Dafny and Boogie, such
 as prettification.")
 
+(defconst boogie-friends-font-lock-var "\\_<\\(\\sw\\(?:\\sw\\|\\s_\\)*\\)\\_>"
+  "Regexp used to detect variable names")
+
+(defconst boogie-friends-font-lock-type "\\_<\\(\\sw+\\(?:<\\sw\\(?:\\sw\\|\\s_\\|[< ,>]\\)*>\\)?\\)\\_>"
+  "Regexp used to detect type names.
+Allowing (\\sw\\(?:\\sw\\|\\s_\\)*\\) in the first part
+of the type causes Emacs to not parse sufficiently
+greedily (the opening bracket is matched by \\s_.")
+
+(defconst boogie-friends-font-lock-var-w-type (concat boogie-friends-font-lock-var "\\(\\(?:\\s-*:\\s-*" boogie-friends-font-lock-type "\\)?\\)")
+  "Regexp used to detect variable names followed by a type")
+
+(defconst boogie-friends-font-lock-assignment-chain (concat "\\(?:\\_<var\\_>\\s-*\\)?" "\\(?:" boogie-friends-font-lock-var-w-type "\\)"
+                                                            "\\(?:\\s-*,\\s-*" boogie-friends-font-lock-var-w-type "\\)*\\s-*:[=|]")
+  "Regexp used to detect [x, y:int, t := 1, 2, 3]")
+
+(defun boogie-friends-mark-font-lock-assignment-chain (limit)
+  "Font lock matcher function for multi-assignments."
+  (when (re-search-forward boogie-friends-font-lock-assignment-chain limit t)
+    (goto-char (match-end 2))))
+
 (defun boogie-friends-verify (&optional arg)
   "Manually check the current file for errors. With prefix ARG, run the alternative checker if it exists."
   (interactive "P")

@@ -53,20 +53,16 @@
 (defvar boogie-font-lock-keywords
   (let ((sb "\\(?:\\sw\\|\\s_\\|[<>]\\)+"))
     (list
-     (cons "!"
-           font-lock-negation-char-face)
-     (cons "\\_<T[A-Z]\\sw+\\_>"
-           font-lock-type-face)
-     (cons (regexp-opt boogie-builtins 'symbols)
-           font-lock-builtin-face)
-     (cons (regexp-opt boogie-keywords 'symbols)
-           font-lock-keyword-face)
-     (cons (concat "\\(" (regexp-opt '("bool" "int" "real") 'symbols) "\\)\\|\\(\\_<bv[0-9]+\\_>\\)")
-           font-lock-type-face)
-     (list (concat "\\(\\_<\\(" sb "\\)\\_>\\)(")
-           '(1 font-lock-function-name-face append))
-     (list (concat "\\_<\\(" sb "\\)\\_>" "\\s-*" ":" "\\s-*" "\\_<\\(" sb "\\)\\_>")
-           '(1 font-lock-variable-name-face) '(2 font-lock-type-face))
+     (cons "!" font-lock-negation-char-face)
+     (cons "\\_<T[A-Z]\\sw+\\_>" font-lock-type-face)
+     (list #'boogie-friends-mark-font-lock-assignment-chain
+           1 font-lock-variable-name-face)
+     (list (concat boogie-friends-font-lock-var "\\s-*" ":" "\\s-*" boogie-friends-font-lock-type)
+           '(1 font-lock-variable-name-face) '(2 font-lock-type-face prepend))
+     (cons (regexp-opt boogie-builtins 'symbols) font-lock-builtin-face)
+     (cons (regexp-opt boogie-keywords 'symbols) font-lock-keyword-face)
+     (cons (concat "\\(" (regexp-opt '("bool" "int" "real") 'symbols) "\\)\\|\\(\\_<bv[0-9]+\\_>\\)") font-lock-type-face)
+     (list (concat "\\(\\_<\\(" sb "\\)\\_>\\)(") '(1 font-lock-function-name-face append))
      (list "{:[^{\n]+}"
            '(0 font-lock-constant-face append))
      (list "\\({\\s-*\\)\\([^{\n]+?\\)\\(\\s-*}\\)"
@@ -84,9 +80,9 @@
   (let ((tbl (make-syntax-table)))
     (modify-syntax-entry ?' "w" tbl)
     (modify-syntax-entry ?_ "w" tbl)
-    (modify-syntax-entry ?# "_" tbl)
-    (modify-syntax-entry ?$ "_" tbl)
-    (modify-syntax-entry ?. "_" tbl)
+    (modify-syntax-entry ?# "w" tbl)
+    (modify-syntax-entry ?$ "w" tbl)
+    (modify-syntax-entry ?. "w" tbl)
     ;; Comments
     (modify-syntax-entry ?\n ">" tbl)
     (modify-syntax-entry ?/  "  124" tbl)
