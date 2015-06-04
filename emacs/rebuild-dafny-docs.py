@@ -1,4 +1,5 @@
 import bs4
+import gzip
 from urllib.request import urlopen
 
 DOCS_URL = "http://research.microsoft.com/en-us/projects/dafny/reference.aspx"
@@ -33,5 +34,5 @@ def read_clean_docs():
         cleanup(top)
     return top
 
-with open("dafny-docs.html", mode='w') as writer:
-    writer.write(str(read_clean_docs()))
+with gzip.open("dafny-docs.html.gz", mode='wb') as writer:
+    writer.write(str(read_clean_docs()).encode("UTF-8"))

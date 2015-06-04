@@ -107,7 +107,7 @@ useful to avoid conflicts between the results of
   "Load and display Dafny's quick reference guide."
   (interactive)
   (-when-let* ((document (with-temp-buffer
-                           (insert-file-contents (expand-file-name "dafny-docs.html" boogie-friends-directory))
+                           (insert-file-contents (expand-file-name "dafny-docs.html.gz" boogie-friends-directory))
                            (libxml-parse-html-region (point-min) (point-max)))))
     (with-current-buffer (get-buffer-create "*dafny-docs*")
       (help-mode)
