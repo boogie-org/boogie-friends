@@ -126,6 +126,8 @@ with a prefix arg."
   :error-patterns boogie-friends-error-patterns
   :modes '(boogie-mode))
 
+(add-to-list 'flycheck-checkers 'boogie)
+
 (defvar-local boogie-highlighting-overlay nil
   "Temporary highlighting of a line matching a Dafny position.
 See `dafny-jump-to-boogie'.")
