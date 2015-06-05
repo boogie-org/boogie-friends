@@ -183,7 +183,7 @@ If SET-POINT, place the point where EVENT points to."
 (defun boogie-friends-backward-line ()
   "Jump one line backwards, and then skip over blank lines."
   (forward-line 0)
-  (skip-chars-backward "\r\n\t "))
+  (/= 0 (skip-chars-backward "\r\n\t ")))
 
 (defun boogie-friends-cycle-indentation (&optional rev)
   "Cycle between reasonable indentation values for current line.
