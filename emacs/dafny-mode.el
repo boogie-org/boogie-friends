@@ -93,11 +93,17 @@ few extra flags in addition to the default ones."
 These come in addition to `dafny-prover-args'."
   :group 'dafny)
 
+(defcustom dafny-prover-local-args '()
+  "Extra arguments to pass to Dafny when checking a file.
+These come in addition to `dafny-prover-args' and
+`dafny-prover-custom-args'."
+  :group 'dafny)
+
 (defcustom dafny-prover-alternate-args '("/z3opt:TRACE=true")
   "Extra arguments to pass to Dafny when compiling with a prefix arg.
-Added to `dafny-prover-basic-args' and `dafny-prover-custom-args'
-when launching manual verification (\\[boogie-friends-verify])
-with a prefix arg."
+Added to `dafny-prover-basic-args', `dafny-prover-local-args',
+and `dafny-prover-custom-args' when manually launching
+verification (\\[boogie-friends-verify]) with a prefix arg."
   :group 'dafny)
 
 (defconst dafny-snippets nil

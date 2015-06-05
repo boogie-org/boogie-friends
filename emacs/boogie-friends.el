@@ -150,6 +150,7 @@ greedily (the opening bracket is matched by \\s_.")
   "Compute the set of arguments to pass to the prover."
   (append (boogie-friends-mode-val 'prover-args)
           (boogie-friends-mode-val 'prover-custom-args)
+          (boogie-friends-mode-val 'prover-local-args)
           boogie-friends--prover-additional-args))
 
 (defun boogie-friends-verify (&optional arg)

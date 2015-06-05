@@ -62,6 +62,12 @@ few extra flags in addition to the default ones."
 These come in addition to `boogie-prover-args'."
   :group 'boogie)
 
+(defcustom boogie-prover-local-args '()
+  "Extra arguments to pass to Boogie when checking a file.
+These come in addition to `boogie-prover-args' and
+`boogie-prover-custom-args'."
+  :group 'boogie)
+
 (defcustom boogie-prover-alternate-args '("/z3opt:TRACE=true")
   "Extra arguments to pass to Boogie when compiling with a prefix arg.
 Added to `boogie-prover-basic-args' and `boogie-prover-custom-args'
