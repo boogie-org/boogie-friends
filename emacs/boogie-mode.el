@@ -46,9 +46,28 @@
 (defconst boogie-all-keywords (cl-loop for source in '(boogie-builtins boogie-keywords)
                                        append (mapcar (lambda (kwd) (propertize kwd 'source source)) (symbol-value source))))
 
-(defconst boogie-checker-extra-args
-  '(list "/z3opt:TRACE=true") ; (concat "/z3opt:TRACE_FILE_NAME='" (or buffer-file-name "log") "-z3.log'"))
-  "Extra flags passed to Boogie when compiling with a prefix arg (\\[boogie-friends-verify])")
+(defgroup boogie nil
+  "IDE extensions for the Boogie programming language."
+  :group 'boogie-friends)
+
+(defcustom boogie-prover-args '("/nologo")
+  "Arguments to pass to Boogie when checking a file.
+The name of the file itself is added last.  You can override all
+arguments here, or use `boogie-prover-custom-args' to add just a
+few extra flags in addition to the default ones."
+  :group 'boogie)
+
+(defcustom boogie-prover-custom-args '()
+  "Extra arguments to pass to Boogie when checking a file.
+These come in addition to `boogie-prover-args'."
+  :group 'boogie)
+
+(defcustom boogie-prover-alternate-args '("/z3opt:TRACE=true")
+  "Extra arguments to pass to Boogie when compiling with a prefix arg.
+Added to `boogie-prover-basic-args' and `boogie-prover-custom-args'
+when launching manual verification (\\[boogie-friends-verify])
+with a prefix arg."
+  :group 'boogie)
 
 (defvar boogie-font-lock-keywords
   (let ((sb "\\(?:\\sw\\|\\s_\\|[<>]\\)+"))
@@ -97,7 +116,7 @@
 
 (flycheck-define-command-checker 'boogie
   "Flycheck checker for the Boogie programming language."
-  :command '("boogie" "/nologo" source)
+  :command '("boogie" (eval (boogie-friends-compute-prover-args)) source)
   :error-patterns boogie-friends-error-patterns
   :modes '(boogie-mode))
 
@@ -109,7 +128,6 @@ See `dafny-jump-to-boogie'.")
   "Temporarily highlight the current line.
 Existing highlights are suppressed."
   (interactive)
-  (boogie-friends-clean-overlay 'dafny-jump-overlay)
   (boogie-friends-clean-overlay nil 'boogie-highlighting-overlay)
   (setq boogie-highlighting-overlay (make-overlay (point-at-bol) (point-at-eol)))
   (overlay-put boogie-highlighting-overlay 'face 'highlight)

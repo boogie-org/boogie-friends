@@ -62,6 +62,10 @@
 (require 'paren)
 (require 'compile)
 
+(defgroup boogie-friends nil
+  "IDE extensions for the programming languages of the Boogie family."
+  :group 'languages)
+
 (defconst boogie-friends-directory (file-name-directory load-file-name)
   "Base directory of this package.")
 
@@ -82,6 +86,10 @@
     (warning bol (file-name) "(" line "," column "):" " Related location: "
              ,boogie-friends-message-pattern))
   "Error patterns for the Dafny and Boogie checkers.")
+
+(defvar boogie-friends--prover-additional-args nil
+  "Storage for extra prover arguments.
+Only for temporary assignment of internal values")
 
 (defvar boogie-friends-hooks nil
   "Hooks for Boogie friends customizations.
@@ -109,22 +117,6 @@ greedily (the opening bracket is matched by \\s_.")
   (when (re-search-forward boogie-friends-font-lock-assignment-chain limit t)
     (goto-char (match-end 2))))
 
-(defun boogie-friends-verify (&optional arg)
-  "Manually check the current file for errors. With prefix ARG, run the alternative checker if it exists."
-  (interactive "P")
-  (let ((buf (current-buffer)))
-    (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
-  (unless (buffer-modified-p)
-    (let* ((checker      (intern (boogie-friends-mode-name)))
-           (extra-args-v (boogie-friends-mode-var 'checker-extra-args))
-           (extra-args   (and (consp arg) (boundp extra-args-v) (eval (symbol-value extra-args-v))))
-           (command      (concat (flycheck-checker-shell-command checker) " "
-                                 (mapconcat #'shell-quote-argument extra-args " ")))
-           (buffer       (compilation-start command nil)))
-      (with-current-buffer buffer
-        (set (make-local-variable 'compilation-error-regexp-alist)
-             (flycheck-checker-compilation-error-regexp-alist checker))))))
-
 (defun boogie-friends-format-header (err)
   "Format the first line of a Flycheck error ERR."
   (car (split-string (flycheck-error-message err) "\n")))
@@ -149,6 +141,26 @@ greedily (the opening bracket is matched by \\s_.")
 (defun boogie-friends-mode-var (suffix)
   "Append SUFFIX to name of current mode, returning a symbol."
   (intern (concat (boogie-friends-mode-name) "-" (symbol-name suffix))))
+
+(defun boogie-friends-mode-val (suffix)
+  "Retrieves the value of (boogie-friends-mode-var SUFFIX)."
+  (symbol-value (boogie-friends-mode-var suffix)))
+
+(defun boogie-friends-compute-prover-args ()
+  "Compute the set of arguments to pass to the prover."
+  (append (boogie-friends-mode-val 'prover-args)
+          (boogie-friends-mode-val 'prover-custom-args)
+          boogie-friends--prover-additional-args))
+
+(defun boogie-friends-verify (&optional arg)
+  "Manually check the current file for errors.
+With prefix ARG, run the alternative checker if it exists."
+  (interactive "P")
+  (let ((buf (current-buffer)))
+    (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
+  (unless (buffer-modified-p)
+    (let* ((boogie-friends--prover-additional-args (and (consp arg) (boogie-friends-mode-val 'prover-alternate-args))))
+      (flycheck-compile (intern (boogie-friends-mode-name))))))
 
 (defmacro boogie-friends-with-click (event mode set-point &rest body)
   "Run BODY in the buffer pointed to by EVENT, if in mode MODE.
