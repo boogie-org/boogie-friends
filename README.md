@@ -79,22 +79,21 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
 
 ### Keybindings
 
+#### All modes
+
+* <kbd>C-c C-c</kbd> re-verifies the current file. With a prefix argument (<kbd>C-u C-c C-c</kbd>), extra arguments are sent to the verifier (by default `/z3opts:TRACE`).
+* <kbd>S-TAB</kbd> manually cycles through reasonable indentation levels.
+
 #### Dafny mode
 
 * <kbd>TAB</kbd> auto-indents.
 * <kbd>C-c C-?</kbd> opens the Dafny docs.
 * <kbd>&lt;C-down-mouse-1></kbd> looks for the definition of the function under point in open buffers.
 * <kbd>C-c C-a</kbd> translates the current file to Boogie and shows the translated file.
-* <kbd>C-c C-j</kbd> or <kbd>C-S-down-mouse-1</kbd> (aka <kbd>Ctrl-Shift-Click</kbd>) jumps to the closest matching location int the Boogie buffer.
+* <kbd>C-c C-j</kbd> or <kbd>C-S-down-mouse-1</kbd> (aka <kbd>Ctrl-Shift-Click</kbd>) jumps to the Boogie line matching the current Dafny line.
 
-* After inserting a snippet, <kbd>TAB</kbd> and <kbd>S-TAB</kbd> navigate the fields, and <kbd>C-d</kbd> removes the current field entirely.
-
+* After inserting a snippet, <kbd>TAB</kbd> moves to the next snippet field, and <kbd>C-d</kbd> removes the current field entirely.
 * During completion, <kbd>C-h</kbd> shows documentation for the current snippet, if available.
-
-#### All modes
-
-<kbd>C-c C-c</kbd> re-verifies the current file. With prefix arg (<kbd>C-u C-c C-c</kbd>), runs the prover with extra arguments (see below)
-<kbd>S-TAB</kbd> (aka <kbd>&lt;backtab></kbd> aka <kbd>Shift-Tab</kbd>) manually cycles through reasonable indentation levels
 
 ### Tips
 
@@ -116,7 +115,7 @@ If you see blocks instead of proper characters, or tall characters, or ugly char
 
 1. Install a good font and restart Emacs ([Symbola](http://users.teilar.gr/~g1951d/Symbola.zip), DejaVu Sans Mono, FreeMono, STIX, Unifont, Segoe UI Symbol, Arial Unicode and Cambria Math should all work).
 
-2. If that doesn't work, setup font fallback by adding the following to your `.emacs` (replace `"Symbola"` by the name of your font):
+2. If that doesn't fix it, setup font fallback by adding the following to your `.emacs` (replace `"Symbola"` by the name of your font):
     ```elisp
     (set-fontset-font t 'unicode (font-spec :name "Symbola") nil 'append)
     ```
