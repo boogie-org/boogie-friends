@@ -80,6 +80,16 @@
 (defcustom dafny-snippets-repo "etc/dafny-snippets"
   "Name of file holding Dafny snippets.")
 
+(defcustom dafny-basic-prover-args '("/enhancedErrorMessages:1" "/pretty:0" "/compile:0" "/nologo")
+  "Arguments to pass to Dafny when checking a file.
+The name of the file itself is added last.  You can override all
+arguments here, or use `dafny-extra-prover-args' to add just a
+few extra flags in addition to the default ones.")
+
+(defcustom dafny-extra-prover-args '()
+  "Extra arguments to pass to Dafny when checking a file.
+These come in addition to `dafny-basic-prover-args'.")
+
 (defconst dafny-snippets nil
   "Cache of all known Dafny snippets, loaded from `dafny-snippets-repo'.")
 
@@ -361,7 +371,7 @@ open Dafny buffers."
 
 (flycheck-define-command-checker 'dafny
   "Flycheck checker for the Dafny programming language."
-  :command '("dafny" "/enhancedErrorMessages:1" "/pretty:0" "/compile:0" "/nologo" source)
+  :command '("dafny" (eval (append dafny-basic-prover-args dafny-extra-prover-args)) source)
   :error-patterns boogie-friends-error-patterns
   :modes '(dafny-mode))
 
