@@ -187,13 +187,13 @@ If SET-POINT, place the point where EVENT points to."
 
 (defun boogie-friends-cycle-indentation (&optional rev)
   "Cycle between reasonable indentation values for current line.
-If REV is non-nil, cycle in the reverse order."
+If REV is non-nil, cycle in the opposite order."
   (interactive)
   (let ((cur  (current-indentation))
         (prev (save-excursion (boogie-friends-backward-line) (current-indentation))))
-    (if rev
-        (indent-line-to (if (= cur 0) (indent-next-tab-stop prev) (indent-next-tab-stop cur rev)))
-      (indent-line-to (if (> cur prev) 0 (indent-next-tab-stop cur rev))))))
+    (if (not rev)
+        (indent-line-to (if (= cur 0) (indent-next-tab-stop prev) (indent-next-tab-stop cur (not rev))))
+      (indent-line-to (if (> cur prev) 0 (indent-next-tab-stop cur (not rev)))))))
 
 (defun boogie-friends-keywords (command &optional arg &rest ignored)
   "A boogie-mode backend for keywords."
