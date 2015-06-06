@@ -222,6 +222,17 @@ name is none is found."
       (error "Buffer %s already exists and is not read-only.  Cowardly refusing to overwrite it" buf-name)))
   (get-buffer-create buf-name))
 
+(defun dafny-show-boogie-source-prepare-buffer (buf cmd fname)
+  (with-current-buffer buf
+    (buffer-disable-undo)
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (insert (format "// %s\n" (mapconcat #'identity cmd " "))))
+    (setq buffer-file-name fname)
+    (boogie-mode)
+    (read-only-mode))
+  (display-buffer buf))
+
 (defun dafny-show-boogie-source ()
   "Translate to Boogie, save the resulting file, and display it."
   (interactive)
@@ -231,23 +242,15 @@ name is none is found."
                (buf-name  (dafny-boogie-buffer-name))
                (buf-fname (dafny-boogie-file-name))
                (buf       (dafny-get-buffer-unless-rw buf-name))
-               (command   (list (flycheck-checker-executable 'dafny) dfy-name "/nologo" "/print:-" "/noVerify")))
+               (cmd       (cons (flycheck-checker-executable 'dafny)
+                                (append (boogie-friends-compute-prover-args)
+                                        (list "/nologo" "/print:-" "/noVerify" dfy-name)))))
     (-when-let* ((proc (get-buffer-process buf)))
       (ignore-errors (kill-process proc) (accept-process-output)))
-    (with-current-buffer buf
-      (buffer-disable-undo)
-      (let ((inhibit-read-only t))
-        (erase-buffer)
-        (insert (format "// %s\n" (mapconcat #'identity command " "))))
-      (setq buffer-file-name buf-fname)
-      (boogie-mode)
-      (read-only-mode))
-    (display-buffer buf)
-    (make-process :name dafny-boogie-proc-name
-                  :buffer buf
-                  :command command
-                  :filter #'dafny-boogie-filter
-                  :sentinel #'dafny-boogie-sentinel)))
+    (dafny-show-boogie-source-prepare-buffer buf cmd buf-fname)
+    (let ((proc (apply #'start-process dafny-boogie-proc-name buf cmd)))
+      (set-process-filter proc #'dafny-boogie-filter)
+      (set-process-sentinel proc #'dafny-boogie-sentinel))))
 
 (defun dafny-line-props ()
   "Classifies the current line (for indentation)."
