@@ -262,7 +262,7 @@ name is none is found."
   (save-excursion
     (beginning-of-line)
     (cons (cond ((or (comment-beginning) (looking-at-p "\\s-*/[/*]")) 'comment)
-                ((looking-at-p "\\s-*case")                           'case)
+                ((looking-at-p "\\s-*\\(case\\|else\\)")              'case)
                 ((looking-at-p ".*{\\s-*\\(//.*\\)?$")                'open)
                 ((looking-at-p ".*}\\s-*\\(//.*\\)?$")                'close)
                 ((looking-at-p ".*;\\s-*\\(//.*\\)?$")                'semicol)
@@ -282,6 +282,7 @@ name is none is found."
          (is-close    (looking-at-p "[^{\n]*}"))
          (is-lonely-open (looking-at-p "[ \t]*{"))
          (is-case    (looking-at-p "[ \t]*case"))
+         (is-else    (looking-at-p "[ \t]*else"))
          (comment-beg (save-excursion (comment-beginning))))
     (indent-line-to
      (cond (comment-beg (if (< comment-beg (point-at-bol)) ;; Multiline comment; indent to '*' or beginning of text
@@ -299,8 +300,10 @@ name is none is found."
                 (re-search-backward (concat "^\\s-*}?" dafny-extended-block-head-regexp) bound t))
               (current-indentation)))
            (is-defun (if (memq prev-type '(open)) (indent-next-tab-stop prev-offset) prev-offset))
-           (is-case (or (indent-next-tab-stop (save-excursion ;; Find the parent match
-                                                (when (re-search-backward "^\\s-*match" nil t) (current-indentation))))
+           (is-case (-if-let (parent (save-excursion (when (re-search-backward "^\\s-*match" nil t) (current-indentation))))
+                        (indent-next-tab-stop parent)
+                      prev-offset))
+           (is-else (or (save-excursion (when (re-search-backward "^\\s-*if" nil t) (current-indentation)))
                         prev-offset))
            (t (pcase prev-type
                 (`comment prev-offset)
@@ -309,7 +312,7 @@ name is none is found."
                 (`close   prev-offset)
                 (`semicol prev-offset)
                 (`defun   (indent-next-tab-stop prev-offset))
-                (`none    (if (memq pprev-type '(none defun comment)) prev-offset (indent-next-tab-stop prev-offset)))
+                (`none    (if (memq pprev-type '(none defun comment case)) prev-offset (indent-next-tab-stop prev-offset)))
                 (_        prev-offset))))))
   (skip-chars-forward " "))
 
