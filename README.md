@@ -69,7 +69,7 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `�
     In your `.emacs`:
 
     ```elisp
-      (setq flycheck-dafny-executable "PATH-TO-DAFNY")
+    (setq flycheck-dafny-executable "PATH-TO-DAFNY")
     (setq flycheck-boogie-executable "PATH-TO-BOOGIE")
     ```
 
@@ -109,7 +109,7 @@ Real-time error highlighting is enabled by default for all languages. You can di
 
 If you see blocks instead of proper characters, or tall characters, or ugly characters:
 
-1. Install a good font and restart Emacs ([Symbola](http://users.teilar.gr/~g1951d/Symbola.zip), DejaVu Sans Mono, FreeMono, STIX, Unifont, Segoe UI Symbol, Arial Unicode and Cambria Math should all work).
+1. Install a good font and restart Emacs (Arial Unicode, Cambria, Segoe UI Symbol, DejaVu Sans Mono, FreeMono, STIX, Unifont and [Symbola](http://users.teilar.gr/~g1951d/Symbola.zip) should all work).
 
 2. If that doesn't fix it, setup font fallback by adding the following to your `.emacs` (replace `"Symbola"` by the name of your font):
     ```elisp
@@ -120,6 +120,12 @@ If you see blocks instead of proper characters, or tall characters, or ugly char
     ```elisp
     (prettify-symbols-mode -1)
     ```
+
+If you don't like the way one particular symbol is rendered, you can adjust the font for just that one:
+
+```elisp
+(set-fontset-font t (cons ?≔ ?≔) "FreeSerif" nil 'prepend)
+```
 
 #### Custom prover configurations
 
