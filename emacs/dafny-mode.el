@@ -39,12 +39,12 @@
 (require 'boogie-mode)
 (require 'dafny-docs)
 
-(defconst dafny-defuns '("class" "codatatype" "colemma" "constructor" "copredicate" "datatype" "function" "inductive"
+(defconst dafny-defuns '("class" "codatatype" "colemma" "constructor" "copredicate" "datatype" "function"
                          "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"))
 
 (defconst dafny-specifiers '("decreases" "ensures" "free" "invariant" "modifies" "reads" "requires"))
 
-(defconst dafny-modifiers '("abstract" "ghost" "protected" "static"))
+(defconst dafny-modifiers '("inductive" "abstract" "ghost" "protected" "static"))
 
 (defconst dafny-builtins '("as" "default" "extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
 
