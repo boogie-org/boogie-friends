@@ -122,7 +122,7 @@ with a prefix arg."
 
 (flycheck-define-command-checker 'boogie
   "Flycheck checker for the Boogie programming language."
-  :command '("boogie" (eval (boogie-friends-compute-prover-args)) source)
+  :command '("boogie" (eval (boogie-friends-compute-prover-args)) source-inplace)
   :error-patterns boogie-friends-error-patterns
   :modes '(boogie-mode))
 
