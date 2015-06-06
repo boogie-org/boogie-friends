@@ -69,12 +69,8 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
     In your `.emacs`:
 
     ```elisp
-    (defun setup-boogie-friends ()
-      (interactive)
       (setq flycheck-dafny-executable "PATH-TO-DAFNY")
-      (setq flycheck-boogie-executable "PATH-TO-BOOGIE"))
-
-    (add-hook 'boogie-friends-hook #'setup-boogie-friends)
+    (setq flycheck-boogie-executable "PATH-TO-BOOGIE")
     ```
 
 ### Keybindings
@@ -105,9 +101,9 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
 
 Real-time error highlighting is enabled by default for all languages. You can disable it:
 
-* Entirely by adding `(flycheck-mode -1)` after the `(interactive)` line in `setup-boogie-friends` above.
-
 * For just one language (say Dafny) by adding `(setq flycheck-disabled-checkers '(dafny))` to your `.emacs`.
+
+* Entirely by adding `(flycheck-mode -1)` to `'boogie-friends-mode-hook`.
 
 #### Font support
 
