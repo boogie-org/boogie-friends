@@ -103,7 +103,7 @@ as prettification.")
   "Regexp used to detect type names.
 Allowing (\\sw\\(?:\\sw\\|\\s_\\)*\\) in the first part
 of the type causes Emacs to not parse sufficiently
-greedily (the opening bracket is matched by \\s_.")
+greedily (the opening bracket is matched by \\s_).")
 
 (defconst boogie-friends-font-lock-array-sub "\\(?:\\[[^\\[\\]]+\\]\\)"
   "Regexp used to detect array subscriptions")

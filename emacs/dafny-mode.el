@@ -134,14 +134,16 @@ the return value."
          2 font-lock-function-name-face)
    (list (concat boogie-friends-font-lock-var "\\s-*" ":" "\\s-*" boogie-friends-font-lock-type)
          '(1 font-lock-variable-name-face) '(2 font-lock-type-face))
-   (list "\\(\\_<forall\\_>\\).*::" 1 ''(face nil display "∀"))
    (cons dafny-defuns-regexp font-lock-builtin-face)
    (cons dafny-modifiers-regexp font-lock-preprocessor-face)
    (cons dafny-specifiers-regexp font-lock-doc-face)
    (cons dafny-builtins-regexp font-lock-builtin-face)
    (cons dafny-keywords-regexp font-lock-keyword-face)
    (cons dafny-types-regexp font-lock-type-face)
-   (cons "!" font-lock-negation-char-face))
+   (cons "!" font-lock-negation-char-face)
+   (list "\\(\\_<forall\\_>\\).*::"
+         '(1 (compose-region (match-beginning 1) (match-end 1) ?∀))
+         '(1 font-lock-keyword-face append)))
   "Font lock specifications for `dafny-mode'.")
 
 (defun dafny-ignore-event (_e)
@@ -418,6 +420,7 @@ open Dafny buffers."
   (boogie-friends-mode-setup)
   (set (make-local-variable 'indent-line-function) #'dafny-indent)
   (set (make-local-variable 'indent-region-function) nil)
+  (add-to-list (make-local-variable 'font-lock-extra-managed-props) 'composition)
   (electric-indent-local-mode 1))
 
 (provide 'dafny-mode)
