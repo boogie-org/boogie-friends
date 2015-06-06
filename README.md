@@ -95,7 +95,8 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
 
 #### General
 
-* Completion, indentation, snippets and syntax coloring should work out of the box.
+* Completion, indentation, snippets, syntax coloring, and real-time verification should work out of the box.
+* Verification happens as you type, and its status is shows in the mode line (`FlyC*`: busy; `FlyC:a/b`: done).
 
 #### Real-time error highlighting
 
