@@ -105,8 +105,11 @@ Allowing (\\sw\\(?:\\sw\\|\\s_\\)*\\) in the first part
 of the type causes Emacs to not parse sufficiently
 greedily (the opening bracket is matched by \\s_.")
 
-(defconst boogie-friends-font-lock-var-w-type (concat boogie-friends-font-lock-var "\\(\\(?:\\s-*:\\s-*" boogie-friends-font-lock-type "\\)?\\)")
-  "Regexp used to detect variable names followed by a type")
+(defconst boogie-friends-font-lock-array-sub "\\(?:\\[[^\\[\\]]+\\]\\)"
+  "Regexp used to detect array subscriptions")
+
+(defconst boogie-friends-font-lock-var-w-type (concat boogie-friends-font-lock-var boogie-friends-font-lock-array-sub "?\\(\\(?:\\s-*:\\s-*" boogie-friends-font-lock-type "\\)?\\)")
+  "Regexp used to detect variable names optionally followed by a type")
 
 (defconst boogie-friends-font-lock-assignment-chain (concat "\\(?:\\_<var\\_>\\s-*\\)?" "\\(?:" boogie-friends-font-lock-var-w-type "\\)"
                                                             "\\(?:\\s-*,\\s-*" boogie-friends-font-lock-var-w-type "\\)*\\s-*:[=|]")

@@ -133,7 +133,7 @@ the return value."
    (list (concat "\\(?:" dafny-defuns-regexp "\\s-+\\)+" boogie-friends-font-lock-var)
          2 font-lock-function-name-face)
    (list (concat boogie-friends-font-lock-var "\\s-*" ":" "\\s-*" boogie-friends-font-lock-type)
-         '(1 font-lock-variable-name-face) '(2 font-lock-type-face prepend))
+         '(1 font-lock-variable-name-face) '(2 font-lock-type-face))
    (list "\\(\\_<forall\\_>\\).*::" 1 ''(face nil display "∀"))
    (cons dafny-defuns-regexp font-lock-builtin-face)
    (cons dafny-modifiers-regexp font-lock-preprocessor-face)
