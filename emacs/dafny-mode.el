@@ -209,6 +209,11 @@ Saves the buffer upon completion of the process, and prevents the insertion
 of a termination message after the conversion completes."
   (when (buffer-live-p (process-buffer proc))
     (with-current-buffer (process-buffer proc)
+      (save-excursion
+        (goto-char (point-max))
+        (when (re-search-backward "^Dafny program verifier finished with . verified, . errors.*$"
+                                  (save-excursion (forward-line -5) (point)) t)
+          (let ((inhibit-read-only t)) (replace-match "" t t))))
       (when buffer-file-name (save-buffer)))
     (message (substitute-command-keys "Use \\[dafny-jump-to-boogie] or \\[dafny-click-jump-to-boogie] (Ctrl+Click) to jump to the Boogie buffer."))))
 
