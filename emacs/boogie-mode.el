@@ -98,10 +98,7 @@ with a prefix arg."
   "Font lock specifications for `boogie-mode'.")
 
 (defvar boogie-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-c") 'boogie-friends-verify)
-    (define-key map (kbd "<backtab>") 'boogie-friends-cycle-indentation)
-    map)
+  (boogie-friends-make-keymap)
   "Keybindings for `boogie-mode'.")
 
 (defvar boogie-mode-syntax-table

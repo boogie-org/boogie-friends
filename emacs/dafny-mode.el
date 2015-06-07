@@ -152,8 +152,7 @@ Useful to ignore mouse-up events handled mouse-down events."
   (interactive "e"))
 
 (defvar dafny-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-c") 'boogie-friends-verify)
+  (let ((map (boogie-friends-make-keymap)))
     (define-key map (kbd "C-c C-a") 'dafny-show-boogie-source)
     (define-key map (kbd "C-c C-j") 'dafny-jump-to-boogie)
     (define-key map (kbd "C-c C-?") 'dafny-docs-open) ;; TODO enable by default?
@@ -161,7 +160,6 @@ Useful to ignore mouse-up events handled mouse-down events."
     (define-key map (kbd "<C-S-mouse-1>") 'dafny-ignore-event)
     (define-key map (kbd "<C-down-mouse-1>") 'dafny-click-find-definition)
     (define-key map (kbd "<C-S-down-mouse-1>") 'dafny-click-jump-to-boogie)
-    (define-key map (kbd "<backtab>") 'boogie-friends-cycle-indentation)
     map)
   "Keybindings for `dafny-mode'.")
 

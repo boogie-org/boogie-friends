@@ -198,6 +198,19 @@ If REV is non-nil, cycle in the opposite order."
         (indent-line-to (if (= cur 0) (indent-next-tab-stop prev) (indent-next-tab-stop cur (not rev))))
       (indent-line-to (if (> cur prev) 0 (indent-next-tab-stop cur (not rev)))))))
 
+(defun boogie-friends-self-insert-and-indent (arg)
+  (interactive "p")
+  (self-insert-command arg)
+  (when (functionp indent-line-function)
+    (funcall indent-line-function)))
+
+(defun boogie-friends-make-keymap ()
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "}") #'boogie-friends-self-insert-and-indent)
+    (define-key map (kbd "C-c C-c") #'boogie-friends-verify)
+    (define-key map (kbd "<backtab>") #'boogie-friends-cycle-indentation)
+    map))
+
 (defun boogie-friends-keywords (command &optional arg &rest ignored)
   "A boogie-mode backend for keywords."
   (interactive (list 'interactive))
