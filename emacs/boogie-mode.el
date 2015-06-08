@@ -78,18 +78,17 @@ with a prefix arg."
 (defvar boogie-font-lock-keywords
   (let ((sb "\\(?:\\sw\\|\\s_\\|[<>]\\)+"))
     (list
-     (cons "!" font-lock-negation-char-face)
-     (cons "\\_<T[A-Z]\\sw+\\_>" font-lock-type-face)
      (list #'boogie-friends-mark-font-lock-assignment-chain
            1 font-lock-variable-name-face)
+     (list (concat "\\(\\_<\\(" sb "\\)\\_>\\)(") '(1 font-lock-function-name-face))
      (list (concat boogie-friends-font-lock-var "\\s-*" ":" "\\s-*" boogie-friends-font-lock-type)
-           '(1 font-lock-variable-name-face) '(2 font-lock-type-face prepend))
+           '(1 font-lock-variable-name-face) '(2 font-lock-type-face))
+     (cons "!" font-lock-negation-char-face)
+     (cons "\\_<T[A-Z]\\sw+\\_>" font-lock-type-face)
      (cons (regexp-opt boogie-builtins 'symbols) font-lock-builtin-face)
      (cons (regexp-opt boogie-keywords 'symbols) font-lock-keyword-face)
      (cons (concat "\\(" (regexp-opt '("bool" "int" "real") 'symbols) "\\)\\|\\(\\_<bv[0-9]+\\_>\\)") font-lock-type-face)
-     (list (concat "\\(\\_<\\(" sb "\\)\\_>\\)(") '(1 font-lock-function-name-face append))
-     (list "{:[^{\n]+}"
-           '(0 font-lock-constant-face append))
+     (list "{:[^{\n]+}" '(0 font-lock-constant-face append))
      (list "\\({\\s-*\\)\\([^{\n]+?\\)\\(\\s-*}\\)"
            '(1 font-lock-constant-face) '(2 '(face italic) prepend) '(3 font-lock-constant-face))
      (list "\\(\\_<forall\\)\\(\\_>\\|<[^>]>\\)?"
