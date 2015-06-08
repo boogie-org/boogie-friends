@@ -229,7 +229,6 @@ name is none is found."
 
 (defun dafny-show-boogie-source-prepare-buffer (buf cmd fname)
   (with-current-buffer buf
-    (buffer-disable-undo)
     (let ((inhibit-read-only t))
       (erase-buffer)
       (insert (format "// %s\n" (mapconcat #'identity cmd " "))))
