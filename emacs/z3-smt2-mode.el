@@ -36,12 +36,15 @@
 ;; boogie-friends package
 
 (require 'boogie-friends)
+(require 'cl-lib)
 
-(defconst z3-smt2-builtins nil)
+(defconst z3-smt2-builtins '("assert" "check-sat" "declare-fun" "declare-sort" "define-fun" "define-sort" "exit"
+                             "get-assertions" "get-assignment" "get-info" "get-option" "get-proof" "get-unsat-core"
+                             "get-value" "pop" "push" "set-info" "set-logic" "set-option"))
 
-(defconst z3-smt2-keywords nil)
+(defconst z3-smt2-types '("Array" "Set" "List" "Bool" "Int" "Real"))
 
-(defconst z3-smt2-all-keywords (cl-loop for source in '(z3-smt2-builtins z3-smt2-keywords)
+(defconst z3-smt2-all-keywords (cl-loop for source in '(z3-smt2-builtins z3-smt2-types)
                                         append (mapcar (lambda (kwd) (propertize kwd 'source source)) (symbol-value source))))
 
 (defgroup z3 nil
@@ -74,6 +77,10 @@ with a prefix arg."
   :group 'z3)
 
 (defvar z3-smt2-font-lock-keywords
+  (list
+   (cons "!" font-lock-negation-char-face)
+   (cons (regexp-opt z3-smt2-types 'symbols) font-lock-type-face)
+   (cons (regexp-opt z3-smt2-builtins 'symbols) font-lock-builtin-face))
   "Font lock specifications for `z3-smt2-mode'.")
 
 (defvar z3-smt2-mode-map
@@ -81,8 +88,14 @@ with a prefix arg."
   "Keybindings for `z3-smt2-mode'.")
 
 (defvar z3-smt2-mode-syntax-table
-  lisp--mode-syntax-table
+  lisp-mode-syntax-table
   "Syntax table used in `z3-smt2-mode'.")
+
+(defun z3-smt2-syntactic-face-function (state)
+  (let ((lisp-font (lisp-font-lock-syntactic-face-function state)))
+    (or lisp-font (and (nth 3 state)
+                       (eq (char-after (nth 8 state)) ?|)
+                       font-lock-string-face))))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.smt2\\'" . z3-smt2-mode))
@@ -108,8 +121,17 @@ with a prefix arg."
 \\{z3-smt2-mode-map}"
   :group 'lisp
   :syntax-table z3-smt2-mode-syntax-table
+
   (lisp-mode-variables nil nil)
-  (boogie-friends-mode-setup t))
+  (setq font-lock-defaults
+        (cl-subst 'z3-smt2-syntactic-face-function
+                  'lisp-font-lock-syntactic-face-function font-lock-defaults))
+  (font-lock-add-keywords nil z3-smt2-font-lock-keywords)
+
+  ;; FIXME find a way to linit Z3 error count (typing [| generates lots of errors
+  (set (make-local-variable 'flycheck-checker-error-threshold) nil)
+  (boogie-friends-mode-setup t)
+  (boogie-friends-setup-prettify))
 
 (provide 'z3-smt2-mode)
 ;;; z3-smt2-mode.el ends here
