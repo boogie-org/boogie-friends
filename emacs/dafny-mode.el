@@ -99,7 +99,7 @@ These come in addition to `dafny-prover-args' and
 `dafny-prover-custom-args'."
   :group 'dafny)
 
-(defcustom dafny-prover-alternate-args '("/z3opt:TRACE=true")
+(defcustom dafny-prover-alternate-args '("/compile:3")
   "Extra arguments to pass to Dafny when compiling with a prefix arg.
 Added to `dafny-prover-basic-args', `dafny-prover-local-args',
 and `dafny-prover-custom-args' when manually launching

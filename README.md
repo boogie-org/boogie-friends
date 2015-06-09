@@ -71,16 +71,22 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `�
     ```elisp
     (setq flycheck-dafny-executable "PATH-TO-DAFNY")
     (setq flycheck-boogie-executable "PATH-TO-BOOGIE")
+    (setq boogie-friends-profile-analyzer-executable "PATH-TO-Z3-AXIOM-PROFILER") ;; Optional
     ```
 
 ### Keybindings
 
 #### All modes
 
-* <kbd>C-c C-c</kbd> re-verifies the current file. With a prefix argument (<kbd>C-u C-c C-c</kbd>), extra arguments are sent to the verifier (by default `/z3opts:TRACE`).
+* <kbd>C-c C-c</kbd> re-verifies the current file. With a prefix argument (<kbd>C-u C-c C-c</kbd>), extra arguments are sent to the verifier (by default `/trace`).
 * <kbd>S-TAB</kbd> manually cycles through reasonable indentation levels.
 
-#### Dafny mode
+#### Dafny and Boogie
+
+* <kbd>C-c C-t</kbd> gets a verification trace for the current file, and parses the resulting timings.
+* <kbd>C-c C-p</kbd> prompts for a method name, generates a tracing profile of that method, and launches the profile analyzer (`boogie-friends-profile-analyzer-executable`) on the resulting trace.
+
+#### Dafny only
 
 * <kbd>TAB</kbd> auto-indents.
 * <kbd>C-c C-?</kbd> opens the Dafny docs.
@@ -128,6 +134,16 @@ If you don't like the way one particular symbol is rendered, you can adjust the 
 (set-fontset-font t (cons ?≔ ?≔) "FreeSerif" nil 'prepend)
 ```
 
+#### Profiling
+
+A typical profiling workflow proceeds as follows:
+
+1. Open a file for which verification is slow, or times out.
+2. Use <kbd>C-c C-t</kbd> to generate a trace (the default timeout is set to 30s; you can customize it by changing `boogie-friends-profiler-timeout`).
+3. Use <kbd>C-c C-p</kbd> to profile a function. The slowest method (as determined by the trace) is presented first.
+4. Marvel at the intricacies of the axiom profiler.
+
+
 #### Custom prover configurations
 
 Each time `boogie-friends` calls a prover, it collects arguments from four sources:
@@ -138,7 +154,7 @@ Each time `boogie-friends` calls a prover, it collects arguments from four sourc
 
  `LANGUAGE-prover-local-args`, another list of extra flags. This is empty by default, and is a good place to add per-file or per-directory flags (see below).
 
-* `LANGUAGE-prover-alternate-args`, a list of flags added to the prover invocation when running `compile` with a prefix argument (<kbd>C-u C-c C-c</kbd>). This is a good place to add flags that you do not always need; for example `"/z3opt:TRACE=true"` (this is the default).
+* `LANGUAGE-prover-alternate-args`, a list of flags added to the prover invocation when running `verify/compile` with a prefix argument (<kbd>C-u C-c C-c</kbd>). This is a good place to add flags that you do not always need; for example `"/compile:3"` (this is the default).
 
 An example configuration might thus look like this:
 
@@ -150,7 +166,7 @@ An example configuration might thus look like this:
 (setq dafny-prover-alternate-args '("/proverWarnings:2" "/traceverify" "/z3opt:TRACE=true" "/trace" "/traceTimes" "/tracePOs"))
 ```
 
-The `LANGUAGE-prover-local-args` is useful if a file requires specific flags: in that case you can set the `LANGUAGE-prover-local-args` [in just that file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Specifying-File-Variables.html) or [in the corresponding directory](http://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html).
+The `LANGUAGE-prover-local-args` is useful if a file requires specific flags (maybe `/vcsMaxKeepGoingSplits`, for example): in that case you can set the `LANGUAGE-prover-local-args` [in just that file](https://www.gnu.org/software/emacs/manual/html_node/emacs/Specifying-File-Variables.html) or [in the corresponding directory](http://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html).
 
 For example, you can add the following to the top of a file:
 

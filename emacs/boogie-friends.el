@@ -87,9 +87,17 @@
              ,boogie-friends-message-pattern))
   "Error patterns for the Dafny and Boogie checkers.")
 
+(defcustom boogie-friends-profiler-timeout 30
+  "Timeout used when profiling.
+This value is read by `boogie-friends-profile', which see.  It
+must an whole number of seconds.")
+
 (defvar boogie-friends--prover-additional-args nil
   "Storage for extra prover arguments.
 Only for temporary assignment of internal values")
+
+(defvar boogie-friends-last-trace nil
+  "Cache of the last trace information obtained for this buffer.")
 
 (defvar boogie-friends-hooks nil
   "Hooks for Boogie friends customizations.
@@ -156,15 +164,123 @@ greedily (the opening bracket is matched by \\s_).")
           (boogie-friends-mode-val 'prover-local-args)
           boogie-friends--prover-additional-args))
 
-(defun boogie-friends-verify (&optional arg)
-  "Manually check the current file for errors.
-With prefix ARG, run the alternative checker if it exists."
-  (interactive "P")
+(defun boogie-friends--flycheck-compile-wrapper (checker)
+  "Like `flycheck-compile', but return the compile buffer."
+  (unless (flycheck-may-use-checker checker)
+    (user-error "Cannot use syntax checker %S in this buffer" checker))
+  (let* ((command (flycheck-checker-shell-command checker))
+         (buffer (compilation-start command nil #'flycheck-compile-name)))
+    (with-current-buffer buffer
+      (set (make-local-variable 'compilation-error-regexp-alist)
+           (flycheck-checker-compilation-error-regexp-alist checker))
+      buffer)))
+
+(defun boogie-friends--compile (additional-arguments use-alternate)
+  "Start compiling the current file.
+Add ADDITIONAL-ARGUMENTS to usual command line, placing them
+after alternate prover args if USE-ALTERNATE is non-nil.  This function
+is useful to implement user-initiated verification, as well as
+tracing.  Returns the compile buffer."
   (let ((buf (current-buffer)))
     (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
   (unless (buffer-modified-p)
-    (let* ((boogie-friends--prover-additional-args (and (consp arg) (boogie-friends-mode-val 'prover-alternate-args))))
-      (flycheck-compile (intern (boogie-friends-mode-name))))))
+    (let* ((custom-args (and use-alternate (boogie-friends-mode-val 'prover-alternate-args)))
+           (boogie-friends--prover-additional-args (append custom-args additional-arguments)))
+      (boogie-friends--flycheck-compile-wrapper (intern (boogie-friends-mode-name))))))
+
+(defun boogie-friends-verify (&optional arg)
+  "Manually check the current file for errors.
+With prefix ARG, run the checker with custom args."
+  (interactive "P")
+  (boogie-friends--compile nil (consp arg)))
+
+(defun boogie-friends-get-timeout-arg ()
+  (list (format "/timeLimit:%d" boogie-friends-profiler-timeout)))
+
+(defun boogie-friends-get-trace-args ()
+  "Build arguments to pass to Dafny or Boogie to produce a trace.
+Used by `boogie-friends-trace', which see. If NO-TIMEOUT is
+non-nil, each method is restricted to
+`boogie-friends-profiler-timeout' seconds."
+  (append (list "/trace")
+          (boogie-friends-get-timeout-arg)))
+
+(defun boogie-friends-get-profile-args (proc)
+  "Build arguments to pass to Dafny or Boogie to produce a profile.
+Used by `boogie-friends-trace', which see. If NO-TIMEOUT is
+non-nil, each method is restricted to
+`boogie-friends-profiler-timeout' seconds."
+  (append (list "/z3opt:TRACE=true")
+          (when (stringp proc) (list (format "/proc:%s" proc)))
+          (boogie-friends-get-timeout-arg)))
+
+(defcustom boogie-friends-profile-analyzer-executable "Z3AxiomProfiler.exe"
+  "The path to a program able to read Z3 traces.")
+
+(defun boogie-friends-profiler-callback (log-path) ;; FIXME prefix arg to select subreport?
+  (-if-let (exec (executable-find boogie-friends-profile-analyzer-executable))
+      (start-process "*DafnyProfilerCallback" " *DafnyProfilerCallback*" exec (list log-path))
+    (message "Executable not found: %s" boogie-friends-profile-analyzer-executable)))
+
+(defun boogie-friends-make-trace-callback (source-buffer compilation-buffer)
+  (lambda (callback-buffer _status)
+    (when (and (eq callback-buffer compilation-buffer)
+               (buffer-live-p callback-buffer))
+      (-when-let (trace (with-current-buffer callback-buffer (boogie-friends-parse-trace)))
+        (with-current-buffer source-buffer
+          (set (make-local-variable 'boogie-friends-last-trace) trace)
+          (message "Trace results collected!"))))))
+
+(defun boogie-friends-trace (&optional use-alternate)
+  "Manually check the current file for errors, producing a trace.
+With prefix USE-ALTERNATE, run the checker with alternate args."
+  (interactive "P")
+  (-when-let* ((trace-args   (boogie-friends-get-trace-args))
+               (compilation-buffer (boogie-friends--compile trace-args  (consp use-alternate)))
+               (trace-parser (boogie-friends-make-trace-callback (current-buffer) compilation-buffer)))
+    (with-current-buffer compilation-buffer
+      (add-hook 'compilation-finish-functions trace-parser nil t))))
+
+(defconst boogie-friends-profiler-whole-file-choice "[[Whole file]]")
+
+(defun boogie-friends-profiler-interact-prepare-completions ()
+  (let* ((candidates (mapcar (lambda (entry) (format "[%.2fs] %s" (cdr entry) (car entry))) boogie-friends-last-trace))
+         (newcdr     (cons boogie-friends-profiler-whole-file-choice (cdr-safe candidates))))
+    (if candidates
+        (cons (car candidates) newcdr)
+      newcdr)))
+
+(defun boogie-friends-profiler-interact ()
+  (let* ((msg        (if boogie-friends-last-trace "Function to complete (TAB for completion): "
+                       "Function name (use \\[boogie-friends-trace] first to enable completion): "))
+         (prompt     (substitute-command-keys msg))
+         (collection (boogie-friends-profiler-interact-prepare-completions))
+         (selected   (completing-read prompt collection nil nil nil nil (car-safe collection)))
+         (cleaned-up (if (member selected collection) (replace-regexp-in-string "^\\[[^ ]*\\] " "" selected) selected))
+         (proc       (unless (member cleaned-up `(nil "" ,boogie-friends-profiler-whole-file-choice)) cleaned-up)))
+  (list proc (consp current-prefix-arg))))
+
+(defun boogie-friends-make-profiler-callback (source-buffer compilation-buffer)
+  (with-current-buffer source-buffer
+    (-when-let* ((fname buffer-file-name))
+      (lambda (callback-buffer status)
+        (when (and (eq callback-buffer compilation-buffer)
+                   (string-match-p "finished" status))
+          (boogie-friends-profiler-callback (expand-file-name "z3.log" (file-name-directory fname))))))))
+
+(defun boogie-friends-profile (func &optional use-alternate)
+  "Profile a given function FUNC, or the whole file is FUNC is nil.
+After invoking the relevant profiling command, call a
+mode-specific function to handle the profile trace. When
+USE-ALTERNATE is non-nil, use alternate prover args. For each
+method profiling stops after `boogie-friends-profiler-timeout'
+seconds."
+  (interactive (boogie-friends-profiler-interact))
+  (-when-let* ((profiler-args (boogie-friends-get-profile-args func))
+               (compilation-buffer (boogie-friends--compile profiler-args use-alternate))
+               (profiler-post-action (boogie-friends-make-profiler-callback (current-buffer) compilation-buffer)))
+    (with-current-buffer compilation-buffer
+      (add-hook 'compilation-finish-functions profiler-post-action nil t))))
 
 (defmacro boogie-friends-with-click (event mode set-point &rest body)
   "Run BODY in the buffer pointed to by EVENT, if in mode MODE.
@@ -204,10 +320,34 @@ If REV is non-nil, cycle in the opposite order."
   (when (functionp indent-line-function)
     (funcall indent-line-function)))
 
+(defconst boogie-friends-trace-entry-regexp
+  "^Verifying\\s-*\\([^ ]+\\)\\s-*...\\s-*\\[\\([^ ]+\\)\\s-+s,.*\\]"
+  "Regexp used to locate useful timings from a Boogie trace.")
+
+(defun boogie-friends-parse-trace-entry ()
+  "Parse one entry from a Boogie trace."
+  (cons
+   (match-string-no-properties 1)
+   (string-to-number (match-string-no-properties 2))))
+
+(defun boogie-friends-parse-trace ()
+  "Parse a Boogie trace.
+This function should be called from a Boogie compilation
+buffer.  The return value is a list of cons of the
+form (FUNCTION-NAME . TIME)"
+  (save-excursion
+    (goto-char (point-min))
+    (cl-sort (cl-loop while (re-search-forward boogie-friends-trace-entry-regexp nil t)
+                   for entry = (ignore-errors (boogie-friends-parse-trace-entry))
+                   when entry collect entry)
+             #'> :key #'cdr)))
+
 (defun boogie-friends-make-keymap ()
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "}") #'boogie-friends-self-insert-and-indent)
     (define-key map (kbd "C-c C-c") #'boogie-friends-verify)
+    (define-key map (kbd "C-c C-t") #'boogie-friends-trace)
+    (define-key map (kbd "C-c C-p") #'boogie-friends-profile)
     (define-key map (kbd "<backtab>") #'boogie-friends-cycle-indentation)
     map))
 
