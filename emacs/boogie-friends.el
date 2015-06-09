@@ -219,7 +219,7 @@ non-nil, each method is restricted to
 
 (defun boogie-friends-profiler-callback (log-path) ;; FIXME prefix arg to select subreport?
   (-if-let (exec (executable-find boogie-friends-profile-analyzer-executable))
-      (start-process "*DafnyProfilerCallback" " *DafnyProfilerCallback*" exec (list log-path))
+      (start-process "*DafnyProfilerCallback" " *DafnyProfilerCallback*" exec log-path)
     (message "Executable not found: %s" boogie-friends-profile-analyzer-executable)))
 
 (defun boogie-friends-make-trace-callback (source-buffer compilation-buffer)
