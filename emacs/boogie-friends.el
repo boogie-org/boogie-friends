@@ -265,7 +265,8 @@ With prefix USE-ALTERNATE, run the checker with alternate args."
     (-when-let* ((fname buffer-file-name))
       (lambda (callback-buffer status)
         (when (and (eq callback-buffer compilation-buffer)
-                   (string-match-p "finished" status))
+                   (or (string-match-p "finished" status) ;; Timeouts may cause abnormal exits
+                       (string-match-p "exited abnormally" status)))
           (boogie-friends-profiler-callback (expand-file-name "z3.log" (file-name-directory fname))))))))
 
 (defun boogie-friends-profile (func &optional use-alternate)
