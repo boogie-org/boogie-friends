@@ -174,87 +174,28 @@ Useful to ignore mouse-up events handled mouse-down events."
     tbl)
   "Syntax table for `dafny-mode'.")
 
-(defconst dafny-boogie-proc-name "*dafny-to-boogie*"
+(defconst dafny-translation-proc-name "*dafny-to-boogie*"
   "Name of the Dafny → Boogie process.")
 
-(defun dafny-boogie-buffer-name ()
-  "Computes a buffer name for the Dafny → Boogie translation.
-Call for the Dafny buffer!"
-  (when (buffer-file-name)
-    (concat (buffer-name) ".bpl")))
+(defconst dafny-translation-extension ".bpl"
+  "Extension of generated Boogie files.")
 
-(defun dafny-boogie-file-name ()
-  "Computes a filename for the Dafny → Boogie translation.
-Call for the Dafny buffer!"
-  (-when-let (fname buffer-file-name)
-    (concat fname ".bpl")))
+(defconst dafny-translation-target-mode 'boogie-mode
+  "Mode of generated Boogie files.")
 
-(defun dafny-boogie-filter (proc string)
-  "Filter function for the Dafny → Boogie process PROC.
-Inserts STRING at end of buffer.  Does not do automatic
-scrolling."
-  (when (buffer-live-p (process-buffer proc))
-    (with-current-buffer (process-buffer proc)
-      (let ((inhibit-read-only t)
-            (prev-location (point)))
-        (save-excursion
-          (goto-char (process-mark proc))
-          (insert string)
-          (set-marker (process-mark proc) (point)))
-        (goto-char (min (point-max) prev-location))))))
+(defconst dafny-translation-prover-args '("/nologo" "/print:-" "/noVerify")
+  "Extra arguments to translate to lower level source")
 
-(defun dafny-boogie-sentinel (proc _sig)
-  "Sentinel function for the Dafny → Boogie process PROC.
-Saves the buffer upon completion of the process, and prevents the insertion
-of a termination message after the conversion completes."
-  (when (buffer-live-p (process-buffer proc))
-    (with-current-buffer (process-buffer proc)
-      (save-excursion
-        (goto-char (point-max))
-        (when (re-search-backward "^Dafny program verifier finished with . verified, . errors.*$"
-                                  (save-excursion (forward-line -5) (point)) t)
-          (let ((inhibit-read-only t)) (replace-match "" t t))))
-      (when buffer-file-name (save-buffer)))
-    (message (substitute-command-keys "Use \\[dafny-jump-to-boogie] or \\[dafny-click-jump-to-boogie] (Ctrl+Click) to jump to the Boogie buffer."))))
+(defun dafny-translation-sentinel-dst-callback ()
+  (boogie-friends-translation-sentinel-cleanup "^Dafny program verifier finished with.*$"))
 
-(defun dafny-get-buffer-unless-rw (buf-name)
-  "Convenience wrapper around `get-buffer-create'.
-Throws if a buffer of name BUF-NAME already exists and is not read-only;
-otherwise, returns that buffer, or a newly created one of that
-name is none is found."
-  (-when-let* ((buffer (get-buffer buf-name)))
-    (when (not (with-current-buffer buffer buffer-read-only))
-      (error "Buffer %s already exists and is not read-only.  Cowardly refusing to overwrite it" buf-name)))
-  (get-buffer-create buf-name))
-
-(defun dafny-show-boogie-source-prepare-buffer (buf cmd fname)
-  (with-current-buffer buf
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      (insert (format "// %s\n" (mapconcat #'identity cmd " "))))
-    (setq buffer-file-name fname)
-    (boogie-mode)
-    (read-only-mode))
-  (display-buffer buf))
+(defun dafny-translation-sentinel-src-callback ()
+  (message (substitute-command-keys "Use \\[dafny-jump-to-boogie] or \\[dafny-click-jump-to-boogie] (Ctrl+Click) to jump to the Boogie buffer.")))
 
 (defun dafny-show-boogie-source ()
   "Translate to Boogie, save the resulting file, and display it."
   (interactive)
-  (let ((buf (current-buffer)))
-    (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
-  (-when-let* ((dfy-name  buffer-file-name)
-               (buf-name  (dafny-boogie-buffer-name))
-               (buf-fname (dafny-boogie-file-name))
-               (buf       (dafny-get-buffer-unless-rw buf-name))
-               (cmd       (cons (flycheck-checker-executable 'dafny)
-                                (append (boogie-friends-compute-prover-args)
-                                        (list "/nologo" "/print:-" "/noVerify" dfy-name)))))
-    (-when-let* ((proc (get-buffer-process buf)))
-      (ignore-errors (kill-process proc) (accept-process-output)))
-    (dafny-show-boogie-source-prepare-buffer buf cmd buf-fname)
-    (let ((proc (apply #'start-process dafny-boogie-proc-name buf cmd)))
-      (set-process-filter proc #'dafny-boogie-filter)
-      (set-process-sentinel proc #'dafny-boogie-sentinel))))
+  (boogie-friends-translate-source))
 
 (defun dafny-line-props ()
   "Classifies the current line (for indentation)."
@@ -320,9 +261,10 @@ name is none is found."
 Attemps to guess the right buffer if BUFFER is nil.  If unable to
 find references to LINE, look for references to neighbouring
 lines."
-  (-when-let* ((buffer         (or buffer (-when-let* ((bpl-fname (dafny-boogie-file-name)))
-                                            (find-buffer-visiting bpl-fname))))
-               (window         (display-buffer buffer))
+  (-when-let* ((buffer (or buffer
+                           (-when-let* ((bpl-fname (cdr-safe (boogie-friends-translation-buffer-file-names))))
+                             (find-buffer-visiting bpl-fname))))
+               (window (display-buffer buffer))
                ((dest . delta) (with-current-buffer buffer
                                  (let ((case-fold-search t))
                                    (save-excursion

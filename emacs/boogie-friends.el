@@ -343,6 +343,88 @@ form (FUNCTION-NAME . TIME)"
                    when entry collect entry)
              #'> :key #'cdr)))
 
+(defun boogie-friends-translation-buffer-file-names ()
+  "Computes a buffer name for translating to lower level source."
+  (-when-let* ((fname (buffer-file-name))
+               (ext   (boogie-friends-mode-val 'translation-extension)))
+    (cons (concat (buffer-name) ext) (concat fname ext))))
+
+(defun boogie-friends-translation-filter (proc string)
+  "Filter function for the source translation process PROC.
+Inserts STRING at end of buffer.  Does not do automatic
+scrolling."
+  (when (buffer-live-p (process-buffer proc))
+    (with-current-buffer (process-buffer proc)
+      (let ((inhibit-read-only t)
+            (prev-location (point)))
+        (save-excursion
+          (goto-char (process-mark proc))
+          (insert string)
+          (set-marker (process-mark proc) (point)))
+        (goto-char (min (point-max) prev-location))))))
+
+(defun boogie-friends-translation-sentinel (proc _sig)
+  "Sentinel function for the source translation process PROC.
+Saves the buffer upon completion of the process, and prevents the insertion
+of a termination message after the conversion completes."
+  (when (buffer-live-p (process-buffer proc))
+    (let ((src-callback (boogie-friends-mode-var 'translation-sentinel-src-callback))
+          (dst-callback (boogie-friends-mode-var 'translation-sentinel-dst-callback)))
+      (with-current-buffer (process-buffer proc)
+        (when (functionp dst-callback) (funcall dst-callback))
+        (when buffer-file-name (save-buffer)))
+      (when (functionp src-callback) (funcall src-callback)))))
+
+(defun boogie-friends-translation-sentinel-cleanup (regexp)
+  "Remove line matching REGEXP at end of buffer."
+  (save-excursion
+    (goto-char (point-max))
+    (when (re-search-backward regexp (save-excursion (forward-line -5) (point)) t)
+      (let ((inhibit-read-only t)) (replace-match "" t t)))))
+
+(defun boogie-friends-get-buffer-unless-rw (buf-name)
+  "Convenience wrapper around `get-buffer-create'.
+Throws if a buffer of name BUF-NAME already exists and is not read-only;
+otherwise, returns that buffer, or a newly created one of that
+name is none is found."
+  (-when-let* ((buffer (get-buffer buf-name)))
+    (when (not (with-current-buffer buffer buffer-read-only))
+      (error "Buffer %s already exists and is not read-only.  Cowardly refusing to overwrite it" buf-name)))
+  (get-buffer-create buf-name))
+
+(defun boogie-friends-translate-source ()
+  "Translate to lower level language, save the resulting file, and display it."
+  (interactive)
+  (let ((buf (current-buffer)))
+    (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
+  (-when-let* ((dst-mode       (boogie-friends-mode-val 'translation-target-mode))
+               (src-name       buffer-file-name)
+               ((dst-buf-name . dst-file-name) (boogie-friends-translation-buffer-file-names))
+               (buffer         (boogie-friends-get-buffer-unless-rw dst-buf-name))
+               (proc-name      (boogie-friends-mode-val 'translation-proc-name))
+               (translate-args (boogie-friends-mode-val 'translation-prover-args))
+               (cmd            (cons (flycheck-checker-executable (intern (boogie-friends-mode-name)))
+                                     (append (boogie-friends-compute-prover-args)
+                                             translate-args (list src-name)))))
+    (-when-let* ((proc (get-buffer-process buffer)))
+      (ignore-errors (kill-process proc) (accept-process-output)))
+    (boogie-friends-prepare-translation-buffer buffer dst-mode cmd dst-file-name)
+    (let ((proc (apply #'start-process proc-name buffer cmd)))
+      (set-process-filter proc #'boogie-friends-translation-filter)
+      (set-process-sentinel proc #'boogie-friends-translation-sentinel))))
+
+(defun boogie-friends-prepare-translation-buffer (buffer mode command-line file-name)
+  (with-current-buffer buffer
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (funcall mode)
+      (insert (mapconcat #'identity command-line " "))
+      (comment-region (point-min) (point-max))
+      (insert "\n"))
+    (setq buffer-file-name file-name)
+    (read-only-mode))
+  (display-buffer buffer))
+
 (defun boogie-friends-make-keymap ()
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "}") #'boogie-friends-self-insert-and-indent)

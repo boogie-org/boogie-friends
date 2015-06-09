@@ -36,6 +36,7 @@
 ;; boogie-friends package
 
 (require 'boogie-friends)
+(require 'z3-smt2-mode)
 
 (defconst boogie-builtins '("axiom" "complete" "const" "ensures" "extends" "free" "function" "implementation"
                             "invariant" "modifies" "procedure" "requires" "returns" "type" "unique" "var" "where"))
@@ -97,7 +98,9 @@ with a prefix arg."
   "Font lock specifications for `boogie-mode'.")
 
 (defvar boogie-mode-map
-  (boogie-friends-make-keymap)
+  (let ((map (boogie-friends-make-keymap)))
+    (define-key map (kbd "C-c C-a") 'boogie-show-z3-source)
+    map)
   "Keybindings for `boogie-mode'.")
 
 (defvar boogie-mode-syntax-table
@@ -113,6 +116,30 @@ with a prefix arg."
     (modify-syntax-entry ?*  "  23bn" tbl)
     tbl)
   "Syntax table for `boogie-mode'.")
+
+
+(defconst boogie-translation-proc-name "*boogie-to-z3*"
+  "Name of the Boogie → Z3 process.")
+
+(defconst boogie-translation-extension ".smt2"
+  "Extension of generated Boogie files.")
+
+(defconst boogie-translation-target-mode 'z3-smt2-mode
+  "Mode of generated Z3 files.")
+
+(defconst boogie-translation-prover-args '("/proverLog:-") ;; FIXME it should be possible to /noVerify here
+  "Extra arguments to translate to lower level source")
+
+(defun boogie-translation-sentinel-dst-callback ()
+  (boogie-friends-translation-sentinel-cleanup "^Boogie program verifier finished with .*$"))
+
+(defun dafny-translation-sentinel-src-callback ()
+  nil)
+
+(defun boogie-show-z3-source ()
+  "Translate to Z3, save the resulting file, and display it."
+  (interactive)
+  (boogie-friends-translate-source))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.bpl\\'" . boogie-mode))
