@@ -371,6 +371,7 @@ of a termination message after the conversion completes."
     (let ((src-callback (boogie-friends-mode-var 'translation-sentinel-src-callback))
           (dst-callback (boogie-friends-mode-var 'translation-sentinel-dst-callback)))
       (with-current-buffer (process-buffer proc)
+        (font-lock-mode)
         (when (functionp dst-callback) (funcall dst-callback))
         (when buffer-file-name (save-buffer)))
       (when (functionp src-callback) (funcall src-callback)))))
@@ -418,6 +419,8 @@ name is none is found."
     (let ((inhibit-read-only t))
       (erase-buffer)
       (funcall mode)
+      (font-lock-mode -1) ;; Font-lock is slow with long lines
+      (toggle-truncate-lines 1)
       (insert (mapconcat #'identity command-line " "))
       (comment-region (point-min) (point-max))
       (insert "\n"))

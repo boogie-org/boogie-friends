@@ -81,7 +81,7 @@
   "Name of file holding Dafny snippets."
   :group 'dafny)
 
-(defcustom dafny-prover-args '("/enhancedErrorMessages:1" "/pretty:0" "/compile:0" "/nologo")
+(defcustom dafny-prover-args '("/enhancedErrorMessages:1" "/compile:0" "/nologo")
   "Arguments to pass to Dafny when checking a file.
 The name of the file itself is added last.  You can override all
 arguments here, or use `dafny-prover-custom-args' to add just a
