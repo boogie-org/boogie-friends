@@ -153,7 +153,7 @@ Useful to ignore mouse-up events handled mouse-down events."
 
 (defvar dafny-mode-map
   (let ((map (boogie-friends-make-keymap t)))
-    (define-key map (kbd "C-c C-a") 'dafny-show-boogie-source)
+    (define-key map (kbd "C-c C-a") 'boogie-friends-translate)
     (define-key map (kbd "C-c C-j") 'dafny-jump-to-boogie)
     (define-key map (kbd "C-c C-?") 'dafny-docs-open) ;; TODO enable by default?
     (define-key map (kbd "<C-mouse-1>") 'dafny-ignore-event)
@@ -183,19 +183,9 @@ Useful to ignore mouse-up events handled mouse-down events."
 (defconst dafny-translation-target-mode 'boogie-mode
   "Mode of generated Boogie files.")
 
-(defconst dafny-translation-prover-args '("/nologo" "/print:-" "/noVerify")
-  "Extra arguments to translate to lower level source")
-
-(defun dafny-translation-sentinel-dst-callback ()
-  (boogie-friends-translation-sentinel-cleanup "^Dafny program verifier finished with.*$"))
-
-(defun dafny-translation-sentinel-src-callback ()
-  (message (substitute-command-keys "Use \\[dafny-jump-to-boogie] or \\[dafny-click-jump-to-boogie] (Ctrl+Click) to jump to the Boogie buffer.")))
-
-(defun dafny-show-boogie-source ()
-  "Translate to Boogie, save the resulting file, and display it."
-  (interactive)
-  (boogie-friends-translate-source))
+(defun dafny-translation-prover-args-fn (dest-fname)
+  "Extra arguments to translate to lower level source"
+  (list "/nologo" "/noVerify" (concat "/print:" dest-fname)))
 
 (defun dafny-line-props ()
   "Classifies the current line (for indentation)."
@@ -262,7 +252,7 @@ Attemps to guess the right buffer if BUFFER is nil.  If unable to
 find references to LINE, look for references to neighbouring
 lines."
   (-when-let* ((buffer (or buffer
-                           (-when-let* ((bpl-fname (cdr-safe (boogie-friends-translation-buffer-file-names))))
+                           (-when-let* ((bpl-fname (boogie-friends-translated-fname)))
                              (find-buffer-visiting bpl-fname))))
                (window (display-buffer buffer))
                ((dest . delta) (with-current-buffer buffer

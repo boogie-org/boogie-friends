@@ -99,7 +99,7 @@ with a prefix arg."
 
 (defvar boogie-mode-map
   (let ((map (boogie-friends-make-keymap t)))
-    (define-key map (kbd "C-c C-a") 'boogie-show-z3-source)
+    (define-key map (kbd "C-c C-a") 'boogie-friends-translate)
     map)
   "Keybindings for `boogie-mode'.")
 
@@ -124,22 +124,9 @@ with a prefix arg."
 (defconst boogie-translation-extension ".smt2"
   "Extension of generated Boogie files.")
 
-(defconst boogie-translation-target-mode 'z3-smt2-mode
-  "Mode of generated Z3 files.")
-
-(defconst boogie-translation-prover-args '("/proverLog:-") ;; FIXME it should be possible to /noVerify here
-  "Extra arguments to translate to lower level source")
-
-(defun boogie-translation-sentinel-dst-callback ()
-  (boogie-friends-translation-sentinel-cleanup "^Boogie program verifier finished with .*$"))
-
-(defun dafny-translation-sentinel-src-callback ()
-  nil)
-
-(defun boogie-show-z3-source ()
-  "Translate to Z3, save the resulting file, and display it."
-  (interactive)
-  (boogie-friends-translate-source))
+(defun boogie-translation-prover-args-fn (dest-fname)
+  "Extra arguments to translate to lower level source"
+  (list "/nologo" (concat "/proverLog:" dest-fname)))  ;; FIXME it should be possible to /noVerify here
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.bpl\\'" . boogie-mode))

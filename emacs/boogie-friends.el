@@ -175,18 +175,22 @@ greedily (the opening bracket is matched by \\s_).")
            (flycheck-checker-compilation-error-regexp-alist checker))
       buffer)))
 
+(defun boogie-friends-save-or-error ()
+  (let ((buf (current-buffer)))
+    (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
+  (unless (and buffer-file-name (not (buffer-modified-p)))
+    (error "Cannot run this command on a dirty source file")))
+
 (defun boogie-friends--compile (additional-arguments use-alternate)
   "Start compiling the current file.
 Add ADDITIONAL-ARGUMENTS to usual command line, placing them
 after alternate prover args if USE-ALTERNATE is non-nil.  This function
 is useful to implement user-initiated verification, as well as
 tracing.  Returns the compile buffer."
-  (let ((buf (current-buffer)))
-    (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
-  (unless (buffer-modified-p)
-    (let* ((custom-args (and use-alternate (boogie-friends-mode-val 'prover-alternate-args)))
-           (boogie-friends--prover-additional-args (append custom-args additional-arguments)))
-      (boogie-friends--flycheck-compile-wrapper (intern (boogie-friends-mode-name))))))
+  (boogie-friends-save-or-error)
+  (let* ((custom-args (and use-alternate (boogie-friends-mode-val 'prover-alternate-args)))
+         (boogie-friends--prover-additional-args (append custom-args additional-arguments)))
+    (boogie-friends--flycheck-compile-wrapper (intern (boogie-friends-mode-name)))))
 
 (defun boogie-friends-verify (&optional arg)
   "Manually check the current file for errors.
@@ -205,6 +209,68 @@ non-nil, each method is restricted to
   (append (list "/trace")
           (boogie-friends-get-timeout-arg)))
 
+(defun boogie-friends-make-trace-callback (source-buffer compilation-buffer)
+  (lambda (callback-buffer _status)
+    (when (and (eq callback-buffer compilation-buffer)
+               (buffer-live-p callback-buffer))
+      (-when-let (trace (with-current-buffer callback-buffer (boogie-friends-parse-trace)))
+        (with-current-buffer source-buffer
+          (set (make-local-variable 'boogie-friends-last-trace) trace)
+          (message (substitute-command-keys "Trace results collected! Use \\[boogie-friends-profile] to start profiling")))))))
+
+(defun boogie-friends-trace (&optional use-alternate)
+  "Manually check the current file for errors, producing a trace.
+With prefix USE-ALTERNATE, run the checker with alternate args."
+  (interactive "P")
+  (boogie-friends-save-or-error)
+  (-when-let* ((trace-args   (boogie-friends-get-trace-args))
+               (compilation-buffer (boogie-friends--compile trace-args (consp use-alternate)))
+               (trace-parser (boogie-friends-make-trace-callback (current-buffer) compilation-buffer)))
+    (with-current-buffer compilation-buffer
+      (add-hook 'compilation-finish-functions trace-parser nil t))))
+
+(defun boogie-friends-ensure-buffer-ro (buffer-fname)
+  "Ensures that any buffer visiting VUFFER-FNAME is readonly.
+Throws if a counter-example is found."
+  (-when-let* ((visiting-buffer (find-buffer-visiting buffer-fname)))
+    (with-current-buffer visiting-buffer
+      (unless buffer-read-only
+        (error "Buffer %s is modified and already visiting %s; cowardly refusing to overwrite" (buffer-name) buffer-fname))))
+  t)
+
+(defun boogie-friends-make-translate-callback (translated-fname source-buffer compilation-buffer)
+  (lambda (callback-buffer status)
+    (when (and (eq callback-buffer compilation-buffer)
+               (string-match-p "finished" status))
+      (let ((buf (find-buffer-visiting translated-fname)))
+        (if buf (with-current-buffer buf (revert-buffer t t))
+          (setq buf (find-file-noselect translated-fname)))
+        (when buf
+          (kill-buffer compilation-buffer)
+          (with-current-buffer buf (read-only-mode))
+          (-if-let* ((source-wind (and (buffer-live-p source-buffer) (get-buffer-window source-buffer))))
+              (with-selected-window source-wind (display-buffer buf))
+            (display-buffer buf)))))))
+
+(defun boogie-friends-translated-fname ()
+  (-when-let* ((translated-ext (boogie-friends-mode-val 'translation-extension)))
+    (concat buffer-file-name translated-ext)))
+
+(defun boogie-friends-translate (&optional use-alternate)
+  "Translate to lower level language, save the resulting file, and display it."
+  (interactive "P")
+  (boogie-friends-save-or-error)
+  (-when-let* ((translated-fname (boogie-friends-translated-fname))
+               (refuse-overwriting (boogie-friends-ensure-buffer-ro translated-fname))
+               (translate-args-f (boogie-friends-mode-var 'translation-prover-args-fn))
+               (translated-args (and (functionp translate-args-f) (funcall translate-args-f translated-fname)))
+               (compilation-buffer (boogie-friends--compile translated-args (consp use-alternate)))
+               (translate-callback (boogie-friends-make-translate-callback translated-fname (current-buffer) compilation-buffer)))
+    (with-current-buffer compilation-buffer
+      (add-hook 'compilation-finish-functions translate-callback nil t))))
+
+(defconst boogie-friends-profiler-whole-file-choice "[[Whole file]]")
+
 (defun boogie-friends-get-profile-args (proc)
   "Build arguments to pass to Dafny or Boogie to produce a profile.
 Used by `boogie-friends-trace', which see. If NO-TIMEOUT is
@@ -222,44 +288,6 @@ non-nil, each method is restricted to
       (start-process "*DafnyProfilerCallback" " *DafnyProfilerCallback*" exec log-path)
     (message "Executable not found: %s" boogie-friends-profile-analyzer-executable)))
 
-(defun boogie-friends-make-trace-callback (source-buffer compilation-buffer)
-  (lambda (callback-buffer _status)
-    (when (and (eq callback-buffer compilation-buffer)
-               (buffer-live-p callback-buffer))
-      (-when-let (trace (with-current-buffer callback-buffer (boogie-friends-parse-trace)))
-        (with-current-buffer source-buffer
-          (set (make-local-variable 'boogie-friends-last-trace) trace)
-          (message "Trace results collected!"))))))
-
-(defun boogie-friends-trace (&optional use-alternate)
-  "Manually check the current file for errors, producing a trace.
-With prefix USE-ALTERNATE, run the checker with alternate args."
-  (interactive "P")
-  (-when-let* ((trace-args   (boogie-friends-get-trace-args))
-               (compilation-buffer (boogie-friends--compile trace-args  (consp use-alternate)))
-               (trace-parser (boogie-friends-make-trace-callback (current-buffer) compilation-buffer)))
-    (with-current-buffer compilation-buffer
-      (add-hook 'compilation-finish-functions trace-parser nil t))))
-
-(defconst boogie-friends-profiler-whole-file-choice "[[Whole file]]")
-
-(defun boogie-friends-profiler-interact-prepare-completions ()
-  (let* ((candidates (mapcar (lambda (entry) (format "[%.2fs] %s" (cdr entry) (car entry))) boogie-friends-last-trace))
-         (newcdr     (cons boogie-friends-profiler-whole-file-choice (cdr-safe candidates))))
-    (if candidates
-        (cons (car candidates) newcdr)
-      newcdr)))
-
-(defun boogie-friends-profiler-interact ()
-  (let* ((msg        (if boogie-friends-last-trace "Function to complete (TAB for completion): "
-                       "Function name (use \\[boogie-friends-trace] first to enable completion): "))
-         (prompt     (substitute-command-keys msg))
-         (collection (boogie-friends-profiler-interact-prepare-completions))
-         (selected   (completing-read prompt collection nil nil nil nil (car-safe collection)))
-         (cleaned-up (if (member selected collection) (replace-regexp-in-string "^\\[[^ ]*\\] " "" selected) selected))
-         (proc       (unless (member cleaned-up `(nil "" ,boogie-friends-profiler-whole-file-choice)) cleaned-up)))
-  (list proc (consp current-prefix-arg))))
-
 (defun boogie-friends-make-profiler-callback (source-buffer compilation-buffer)
   (with-current-buffer source-buffer
     (-when-let* ((fname buffer-file-name))
@@ -269,6 +297,24 @@ With prefix USE-ALTERNATE, run the checker with alternate args."
                        (string-match-p "exited abnormally" status)))
           (boogie-friends-profiler-callback (expand-file-name "z3.log" (file-name-directory fname))))))))
 
+(defun boogie-friends-profiler-interact-prepare-completions ()
+  (let* ((candidates (mapcar (lambda (entry) (format "[%.2fs] %s" (cdr entry) (car entry))) boogie-friends-last-trace))
+         (newcdr     (cons boogie-friends-profiler-whole-file-choice (cdr-safe candidates))))
+    (if candidates
+        (cons (car candidates) newcdr)
+      newcdr)))
+
+(defun boogie-friends-profiler-interact ()
+  (boogie-friends-save-or-error)
+  (let* ((msg        (if boogie-friends-last-trace "Function to complete (TAB for completion): "
+                       "Function name (use \\[boogie-friends-trace] first to enable completion): "))
+         (prompt     (substitute-command-keys msg))
+         (collection (boogie-friends-profiler-interact-prepare-completions))
+         (selected   (completing-read prompt collection nil nil nil nil (car-safe collection)))
+         (cleaned-up (if (member selected collection) (replace-regexp-in-string "^\\[[^ ]*\\] " "" selected) selected))
+         (proc       (unless (member cleaned-up `(nil "" ,boogie-friends-profiler-whole-file-choice)) cleaned-up)))
+  (list proc (consp current-prefix-arg))))
+
 (defun boogie-friends-profile (func &optional use-alternate)
   "Profile a given function FUNC, or the whole file is FUNC is nil.
 After invoking the relevant profiling command, call a
@@ -277,6 +323,7 @@ USE-ALTERNATE is non-nil, use alternate prover args. For each
 method profiling stops after `boogie-friends-profiler-timeout'
 seconds."
   (interactive (boogie-friends-profiler-interact))
+  (boogie-friends-save-or-error)
   (-when-let* ((profiler-args (boogie-friends-get-profile-args func))
                (compilation-buffer (boogie-friends--compile profiler-args use-alternate))
                (profiler-post-action (boogie-friends-make-profiler-callback (current-buffer) compilation-buffer)))
@@ -342,91 +389,6 @@ form (FUNCTION-NAME . TIME)"
                    for entry = (ignore-errors (boogie-friends-parse-trace-entry))
                    when entry collect entry)
              #'> :key #'cdr)))
-
-(defun boogie-friends-translation-buffer-file-names ()
-  "Computes a buffer name for translating to lower level source."
-  (-when-let* ((fname (buffer-file-name))
-               (ext   (boogie-friends-mode-val 'translation-extension)))
-    (cons (concat (buffer-name) ext) (concat fname ext))))
-
-(defun boogie-friends-translation-filter (proc string)
-  "Filter function for the source translation process PROC.
-Inserts STRING at end of buffer.  Does not do automatic
-scrolling."
-  (when (buffer-live-p (process-buffer proc))
-    (with-current-buffer (process-buffer proc)
-      (let ((inhibit-read-only t)
-            (prev-location (point)))
-        (save-excursion
-          (goto-char (process-mark proc))
-          (insert string)
-          (set-marker (process-mark proc) (point)))
-        (goto-char (min (point-max) prev-location))))))
-
-(defun boogie-friends-translation-sentinel (proc _sig)
-  "Sentinel function for the source translation process PROC.
-Saves the buffer upon completion of the process, and prevents the insertion
-of a termination message after the conversion completes."
-  (when (buffer-live-p (process-buffer proc))
-    (let ((src-callback (boogie-friends-mode-var 'translation-sentinel-src-callback))
-          (dst-callback (boogie-friends-mode-var 'translation-sentinel-dst-callback)))
-      (with-current-buffer (process-buffer proc)
-        (font-lock-mode)
-        (when (functionp dst-callback) (funcall dst-callback))
-        (when buffer-file-name (save-buffer)))
-      (when (functionp src-callback) (funcall src-callback)))))
-
-(defun boogie-friends-translation-sentinel-cleanup (regexp)
-  "Remove line matching REGEXP at end of buffer."
-  (save-excursion
-    (goto-char (point-max))
-    (when (re-search-backward regexp (save-excursion (forward-line -5) (point)) t)
-      (let ((inhibit-read-only t)) (replace-match "" t t)))))
-
-(defun boogie-friends-get-buffer-unless-rw (buf-name)
-  "Convenience wrapper around `get-buffer-create'.
-Throws if a buffer of name BUF-NAME already exists and is not read-only;
-otherwise, returns that buffer, or a newly created one of that
-name is none is found."
-  (-when-let* ((buffer (get-buffer buf-name)))
-    (when (not (with-current-buffer buffer buffer-read-only))
-      (error "Buffer %s already exists and is not read-only.  Cowardly refusing to overwrite it" buf-name)))
-  (get-buffer-create buf-name))
-
-(defun boogie-friends-translate-source ()
-  "Translate to lower level language, save the resulting file, and display it."
-  (interactive)
-  (let ((buf (current-buffer)))
-    (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
-  (-when-let* ((dst-mode       (boogie-friends-mode-val 'translation-target-mode))
-               (src-name       buffer-file-name)
-               ((dst-buf-name . dst-file-name) (boogie-friends-translation-buffer-file-names))
-               (buffer         (boogie-friends-get-buffer-unless-rw dst-buf-name))
-               (proc-name      (boogie-friends-mode-val 'translation-proc-name))
-               (translate-args (boogie-friends-mode-val 'translation-prover-args))
-               (cmd            (cons (flycheck-checker-executable (intern (boogie-friends-mode-name)))
-                                     (append (boogie-friends-compute-prover-args)
-                                             translate-args (list src-name)))))
-    (-when-let* ((proc (get-buffer-process buffer)))
-      (ignore-errors (kill-process proc) (accept-process-output)))
-    (boogie-friends-prepare-translation-buffer buffer dst-mode cmd dst-file-name)
-    (let ((proc (apply #'start-process proc-name buffer cmd)))
-      (set-process-filter proc #'boogie-friends-translation-filter)
-      (set-process-sentinel proc #'boogie-friends-translation-sentinel))))
-
-(defun boogie-friends-prepare-translation-buffer (buffer mode command-line file-name)
-  (with-current-buffer buffer
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      (funcall mode)
-      (font-lock-mode -1) ;; Font-lock is slow with long lines
-      (toggle-truncate-lines 1)
-      (insert (mapconcat #'identity command-line " "))
-      (comment-region (point-min) (point-max))
-      (insert "\n"))
-    (setq buffer-file-name file-name)
-    (read-only-mode))
-  (display-buffer buffer))
 
 (defun boogie-friends-make-keymap (&optional include-profiling)
   "Constructs a keemap suitable for boogie-related languages.
