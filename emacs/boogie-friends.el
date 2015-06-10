@@ -313,7 +313,7 @@ non-nil, each method is restricted to
          (prompt     (substitute-command-keys msg))
          (collection (boogie-friends-profiler-interact-prepare-completions))
          (selected   (ido-completing-read prompt collection nil nil nil nil (car-safe collection)))
-         (cleaned-up (if (member selected collection) (replace-regexp-in-string "^\\[[^ ]*\\] " "" selected) selected))
+         (cleaned-up (if (member selected collection) (replace-regexp-in-string " ([^ ]*)$" "" selected) selected))
          (proc       (unless (member cleaned-up `(nil "" ,boogie-friends-profiler-whole-file-choice)) cleaned-up)))
   (list proc (consp current-prefix-arg))))
 
