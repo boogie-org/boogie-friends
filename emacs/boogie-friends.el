@@ -61,6 +61,7 @@
 (require 'hideshow)
 (require 'paren)
 (require 'compile)
+(require 'ido)
 
 (defgroup boogie-friends nil
   "IDE extensions for the programming languages of the Boogie family."
@@ -270,7 +271,7 @@ Throws if a counter-example is found."
     (with-current-buffer compilation-buffer
       (add-hook 'compilation-finish-functions translate-callback nil t))))
 
-(defconst boogie-friends-profiler-whole-file-choice "[[Whole file]]")
+(defconst boogie-friends-profiler-whole-file-choice "Whole file")
 
 (defun boogie-friends-get-profile-args (proc)
   "Build arguments to pass to Dafny or Boogie to produce a profile.
@@ -299,7 +300,7 @@ non-nil, each method is restricted to
           (boogie-friends-profiler-callback (expand-file-name "z3.log" (file-name-directory fname))))))))
 
 (defun boogie-friends-profiler-interact-prepare-completions ()
-  (let* ((candidates (mapcar (lambda (entry) (format "[%.2fs] %s" (cdr entry) (car entry))) boogie-friends-last-trace))
+  (let* ((candidates (mapcar (lambda (entry) (format "%s (%.2fs)" (car entry) (cdr entry))) boogie-friends-last-trace))
          (newcdr     (cons boogie-friends-profiler-whole-file-choice (cdr-safe candidates))))
     (if candidates
         (cons (car candidates) newcdr)
@@ -311,7 +312,7 @@ non-nil, each method is restricted to
                        "Function name (use \\[boogie-friends-trace] first to enable completion): "))
          (prompt     (substitute-command-keys msg))
          (collection (boogie-friends-profiler-interact-prepare-completions))
-         (selected   (completing-read prompt collection nil nil nil nil (car-safe collection)))
+         (selected   (ido-completing-read prompt collection nil nil nil nil (car-safe collection)))
          (cleaned-up (if (member selected collection) (replace-regexp-in-string "^\\[[^ ]*\\] " "" selected) selected))
          (proc       (unless (member cleaned-up `(nil "" ,boogie-friends-profiler-whole-file-choice)) cleaned-up)))
   (list proc (consp current-prefix-arg))))
