@@ -164,39 +164,40 @@ greedily (the opening bracket is matched by \\s_).")
           (boogie-friends-mode-val 'prover-local-args)
           boogie-friends--prover-additional-args))
 
-(defun boogie-friends--flycheck-compile-wrapper (checker)
-  "Like `flycheck-compile', but return the compile buffer."
-  (unless (flycheck-may-use-checker checker)
-    (user-error "Cannot use syntax checker %S in this buffer" checker))
-  (let* ((command (flycheck-checker-shell-command checker))
-         (buffer (compilation-start command nil #'flycheck-compile-name)))
-    (with-current-buffer buffer
-      (set (make-local-variable 'compilation-error-regexp-alist)
-           (flycheck-checker-compilation-error-regexp-alist checker))
-      buffer)))
-
 (defun boogie-friends-save-or-error ()
   (let ((buf (current-buffer)))
     (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
   (unless (and buffer-file-name (not (buffer-modified-p)))
     (error "Cannot run this command on a dirty source file")))
 
-(defun boogie-friends--compile (additional-arguments use-alternate)
+(defun boogie-friends-compilation-buffer-namer (infix)
+  (let ((name (format "*%s-%s-%s*" (boogie-friends-mode-name) infix buffer-file-name)))
+  (lambda (_mode) name)))
+
+(defun boogie-friends--compile (additional-arguments use-alternate name)
   "Start compiling the current file.
 Add ADDITIONAL-ARGUMENTS to usual command line, placing them
 after alternate prover args if USE-ALTERNATE is non-nil.  This function
 is useful to implement user-initiated verification, as well as
 tracing.  Returns the compile buffer."
   (boogie-friends-save-or-error)
-  (let* ((custom-args (and use-alternate (boogie-friends-mode-val 'prover-alternate-args)))
-         (boogie-friends--prover-additional-args (append custom-args additional-arguments)))
-    (boogie-friends--flycheck-compile-wrapper (intern (boogie-friends-mode-name)))))
+  (let ((checker (intern (boogie-friends-mode-name))))
+    (unless (flycheck-may-use-checker checker)
+      (user-error "Prover %s is improperly configured" checker))
+    (let* ((custom-args (and use-alternate (boogie-friends-mode-val 'prover-alternate-args)))
+           (boogie-friends--prover-additional-args (append custom-args additional-arguments))
+           (command (flycheck-checker-shell-command checker))
+           (buffer (compilation-start command nil (boogie-friends-compilation-buffer-namer name))))
+      (with-current-buffer buffer
+        (set (make-local-variable 'compilation-error-regexp-alist)
+             (flycheck-checker-compilation-error-regexp-alist checker)))
+      buffer)))
 
 (defun boogie-friends-verify (&optional arg)
   "Manually check the current file for errors.
 With prefix ARG, run the checker with custom args."
   (interactive "P")
-  (boogie-friends--compile nil (consp arg)))
+  (boogie-friends--compile nil (consp arg) "verification"))
 
 (defun boogie-friends-get-timeout-arg ()
   (list (format "/timeLimit:%d" boogie-friends-profiler-timeout)))
@@ -224,7 +225,7 @@ With prefix USE-ALTERNATE, run the checker with alternate args."
   (interactive "P")
   (boogie-friends-save-or-error)
   (-when-let* ((trace-args   (boogie-friends-get-trace-args))
-               (compilation-buffer (boogie-friends--compile trace-args (consp use-alternate)))
+               (compilation-buffer (boogie-friends--compile trace-args (consp use-alternate) "trace"))
                (trace-parser (boogie-friends-make-trace-callback (current-buffer) compilation-buffer)))
     (with-current-buffer compilation-buffer
       (add-hook 'compilation-finish-functions trace-parser nil t))))
@@ -264,7 +265,7 @@ Throws if a counter-example is found."
                (refuse-overwriting (boogie-friends-ensure-buffer-ro translated-fname))
                (translate-args-f (boogie-friends-mode-var 'translation-prover-args-fn))
                (translated-args (and (functionp translate-args-f) (funcall translate-args-f translated-fname)))
-               (compilation-buffer (boogie-friends--compile translated-args (consp use-alternate)))
+               (compilation-buffer (boogie-friends--compile translated-args (consp use-alternate) "translate"))
                (translate-callback (boogie-friends-make-translate-callback translated-fname (current-buffer) compilation-buffer)))
     (with-current-buffer compilation-buffer
       (add-hook 'compilation-finish-functions translate-callback nil t))))
@@ -325,7 +326,7 @@ seconds."
   (interactive (boogie-friends-profiler-interact))
   (boogie-friends-save-or-error)
   (-when-let* ((profiler-args (boogie-friends-get-profile-args func))
-               (compilation-buffer (boogie-friends--compile profiler-args use-alternate))
+               (compilation-buffer (boogie-friends--compile profiler-args use-alternate "profile"))
                (profiler-post-action (boogie-friends-make-profiler-callback (current-buffer) compilation-buffer)))
     (with-current-buffer compilation-buffer
       (add-hook 'compilation-finish-functions profiler-post-action nil t))))
