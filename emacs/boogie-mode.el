@@ -98,7 +98,7 @@ with a prefix arg."
   "Font lock specifications for `boogie-mode'.")
 
 (defvar boogie-mode-map
-  (let ((map (boogie-friends-make-keymap)))
+  (let ((map (boogie-friends-make-keymap t)))
     (define-key map (kbd "C-c C-a") 'boogie-show-z3-source)
     map)
   "Keybindings for `boogie-mode'.")
