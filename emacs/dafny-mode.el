@@ -140,7 +140,7 @@ the return value."
    (cons dafny-builtins-regexp font-lock-builtin-face)
    (cons dafny-keywords-regexp font-lock-keyword-face)
    (cons dafny-types-regexp font-lock-type-face)
-   (cons "!" font-lock-negation-char-face)
+   (list "\\(!\\)\\([^=]\\|$\\)" 1 font-lock-negation-char-face)
    (list "\\(\\_<forall\\_>\\).*::"
          '(1 (compose-region (match-beginning 1) (match-end 1) ?∀))
          '(1 font-lock-keyword-face append)))

@@ -84,7 +84,7 @@ with a prefix arg."
      (list (concat "\\(\\_<\\(" sb "\\)\\_>\\)(") '(1 font-lock-function-name-face))
      (list (concat boogie-friends-font-lock-var "\\s-*" ":" "\\s-*" boogie-friends-font-lock-type)
            '(1 font-lock-variable-name-face) '(2 font-lock-type-face))
-     (cons "!" font-lock-negation-char-face)
+     (list "\\(!\\)\\([^=]\\|$\\)" 1 font-lock-negation-char-face)
      (cons "\\_<T[A-Z]\\sw+\\_>" font-lock-type-face)
      (cons (regexp-opt boogie-builtins 'symbols) font-lock-builtin-face)
      (cons (regexp-opt boogie-keywords 'symbols) font-lock-keyword-face)
