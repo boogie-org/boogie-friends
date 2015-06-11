@@ -351,8 +351,9 @@ non-nil, each method is restricted to
              (lambda (source-path) (boogie-friends-profile-internal func use-alternate source-path)))))
 
 (defun boogie-friends-profile-internal (func use-alternate source-path)
-  (-when-let* ((log-path (expand-file-name (concat (file-name-nondirectory source-path) ".log") (file-name-directory source-path)))
-               (profiler-args (boogie-friends-get-profile-args log-path func))
+  ;;(expand-file-name (concat (file-name-nondirectory source-path) ".log") (file-name-directory source-path)))
+  (-when-let* ((log-path (expand-file-name "z3.log" (file-name-directory source-path)))
+               (profiler-args (boogie-friends-get-profile-args nil func)) ;; FIXME
                (compilation-buffer (boogie-friends--compile profiler-args use-alternate "profile"))
                (profiler-post-action (boogie-friends-make-profiler-callback source-path log-path compilation-buffer)))
     (with-current-buffer compilation-buffer
