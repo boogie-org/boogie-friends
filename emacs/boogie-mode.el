@@ -128,6 +128,11 @@ with a prefix arg."
   "Extra arguments to translate to lower level source"
   (list "/nologo" (concat "/proverLog:" dest-fname)))  ;; FIXME it should be possible to /noVerify here
 
+(defun boogie-profiler-prepare-fn (_use-alternate callback)
+  "Prepare a boogie source buffer before launching the profiler"
+  ;; Nothing to do: We already have the buffer
+  (funcall callback buffer-file-name))
+
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.bpl\\'" . boogie-mode))
 

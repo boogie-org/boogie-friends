@@ -143,6 +143,7 @@ A typical profiling workflow proceeds as follows:
 3. Use <kbd>C-c C-p</kbd> to profile a function. The slowest method (as determined by the trace) is presented first.
 4. Marvel at the intricacies of the axiom profiler.
 
+Note: The axiom profiler works best if it has a Boogie source file to look at; thus, when profiling a Dafny source file, `boogie-friends` transparently saves it as a translated Boogie file first, and then runs Boogie (with profiling enabled) on it. Thus the profiler is Boogie in all cases, and custom prover arguments need to be set for Boogie if they are to be taken into account for profiling (for tracing and translation, however, Dafny's settings apply).
 
 #### Custom prover configurations
 

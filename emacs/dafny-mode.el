@@ -187,6 +187,14 @@ Useful to ignore mouse-up events handled mouse-down events."
   "Extra arguments to translate to lower level source"
   (list "/nologo" "/noVerify" (concat "/print:" dest-fname)))
 
+(defun dafny-profiler-prepare-fn (use-alternate callback)
+  "Prepare a boogie source buffer before launching the profiler"
+  ;; The callback is invoked in the context of the new, translated buffer
+  (boogie-friends-translate
+   use-alternate (lambda (_source-buffer translated-buffer)
+                   (with-current-buffer translated-buffer
+                     (funcall callback buffer-file-name)))))
+
 (defun dafny-line-props ()
   "Classifies the current line (for indentation)."
   (save-excursion

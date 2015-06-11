@@ -240,25 +240,41 @@ Throws if a counter-example is found."
         (error "Buffer %s is modified and already visiting %s; cowardly refusing to overwrite" (buffer-name) buffer-fname))))
   t)
 
-(defun boogie-friends-make-translate-callback (translated-fname source-buffer compilation-buffer)
+(defun boogie-friends-translate-callback (translated-fname source-buffer compilation-buffer continuation callback-buffer status)
+  (when (and (eq callback-buffer compilation-buffer)
+             (string-match-p "finished" status))
+    (let ((buf (find-buffer-visiting translated-fname))
+          (local-vars (with-current-buffer source-buffer file-local-variables-alist)))
+      (if buf (with-current-buffer buf (revert-buffer t t))
+        (setq buf (find-file-noselect translated-fname)))
+      (when buf
+        (kill-buffer compilation-buffer)
+        (with-current-buffer buf
+          (let ((inhibit-read-only t))
+            ;; Port local variables to translated buffer
+            (when local-vars
+              (cl-loop for (var . val) in local-vars
+                       unless (eq var 'mode)
+                       do (add-file-local-variable var val))
+              (save-buffer))
+            (goto-char (point-min)))
+          (read-only-mode))
+        (-if-let* ((source-wind (and (buffer-live-p source-buffer) (get-buffer-window source-buffer))))
+            (with-selected-window source-wind (display-buffer buf))
+          (display-buffer buf))
+        (when (functionp continuation)
+          (funcall continuation source-buffer buf))))))
+
+(defun boogie-friends-make-translate-callback (translated-fname source-buffer compilation-buffer continuation)
   (lambda (callback-buffer status)
-    (when (and (eq callback-buffer compilation-buffer)
-               (string-match-p "finished" status))
-      (let ((buf (find-buffer-visiting translated-fname)))
-        (if buf (with-current-buffer buf (revert-buffer t t))
-          (setq buf (find-file-noselect translated-fname)))
-        (when buf
-          (kill-buffer compilation-buffer)
-          (with-current-buffer buf (read-only-mode))
-          (-if-let* ((source-wind (and (buffer-live-p source-buffer) (get-buffer-window source-buffer))))
-              (with-selected-window source-wind (display-buffer buf))
-            (display-buffer buf)))))))
+    (boogie-friends-translate-callback translated-fname source-buffer compilation-buffer
+                                       continuation callback-buffer status)))
 
 (defun boogie-friends-translated-fname ()
   (-when-let* ((translated-ext (boogie-friends-mode-val 'translation-extension)))
     (concat buffer-file-name translated-ext)))
 
-(defun boogie-friends-translate (&optional use-alternate)
+(defun boogie-friends-translate (&optional use-alternate callback)
   "Translate to lower level language, save the resulting file, and display it."
   (interactive "P")
   (boogie-friends-save-or-error)
@@ -266,38 +282,41 @@ Throws if a counter-example is found."
                (refuse-overwriting (boogie-friends-ensure-buffer-ro translated-fname))
                (translate-args-f (boogie-friends-mode-var 'translation-prover-args-fn))
                (translated-args (and (functionp translate-args-f) (funcall translate-args-f translated-fname)))
-               (compilation-buffer (boogie-friends--compile translated-args (consp use-alternate) "translate"))
-               (translate-callback (boogie-friends-make-translate-callback translated-fname (current-buffer) compilation-buffer)))
+               (compilation-buffer (boogie-friends--compile translated-args use-alternate "translate"))
+               (translate-callback (boogie-friends-make-translate-callback translated-fname (current-buffer) compilation-buffer callback)))
     (with-current-buffer compilation-buffer
       (add-hook 'compilation-finish-functions translate-callback nil t))))
 
 (defconst boogie-friends-profiler-whole-file-choice "Whole file")
 
-(defun boogie-friends-get-profile-args (proc)
+(defun boogie-friends-get-profile-args (log-path proc)
   "Build arguments to pass to Dafny or Boogie to produce a profile.
 Used by `boogie-friends-trace', which see. If NO-TIMEOUT is
 non-nil, each method is restricted to
 `boogie-friends-profiler-timeout' seconds."
   (append (list "/z3opt:TRACE=true")
+          (when log-path (format "/z3opt:TRACE_FILE_NAME=\"%s\"" log-path)) ;; FIXME
           (when (stringp proc) (list (format "/proc:%s" proc)))
           (boogie-friends-get-timeout-arg)))
 
 (defcustom boogie-friends-profile-analyzer-executable "Z3AxiomProfiler.exe"
   "The path to a program able to read Z3 traces.")
 
-(defun boogie-friends-profiler-callback (log-path) ;; FIXME prefix arg to select subreport?
-  (-if-let (exec (executable-find boogie-friends-profile-analyzer-executable))
-      (start-process "*DafnyProfilerCallback" " *DafnyProfilerCallback*" exec log-path)
+(defun boogie-friends-profiler-callback (source-path log-path) ;; FIXME prefix arg to select subreport?
+  (-if-let* ((exec (executable-find boogie-friends-profile-analyzer-executable))
+             (prog (list exec source-path (concat "/l:" log-path)))
+             (cmd  (mapconcat #'shell-quote-argument prog " ")))
+      (progn
+        (message "Launching profiler; use [%s] to launch again manually" cmd)
+        (apply #'start-process "*DafnyProfilerCallback" " *DafnyProfilerCallback*" prog))
     (message "Executable not found: %s" boogie-friends-profile-analyzer-executable)))
 
-(defun boogie-friends-make-profiler-callback (source-buffer compilation-buffer)
-  (with-current-buffer source-buffer
-    (-when-let* ((fname buffer-file-name))
-      (lambda (callback-buffer status)
-        (when (and (eq callback-buffer compilation-buffer)
-                   (or (string-match-p "finished" status) ;; Timeouts may cause abnormal exits
-                       (string-match-p "exited abnormally" status)))
-          (boogie-friends-profiler-callback (expand-file-name "z3.log" (file-name-directory fname))))))))
+(defun boogie-friends-make-profiler-callback (source-path log-path compilation-buffer)
+  (lambda (callback-buffer status)
+    (when (and (eq callback-buffer compilation-buffer)
+               (or (string-match-p "finished" status) ;; Timeouts may cause abnormal exits
+                   (string-match-p "exited abnormally" status)))
+      (boogie-friends-profiler-callback source-path log-path))))
 
 (defun boogie-friends-profiler-interact-prepare-completions ()
   (let* ((candidates (mapcar (lambda (entry) (format "%s (%.2fs)" (car entry) (cdr entry))) boogie-friends-last-trace))
@@ -308,7 +327,7 @@ non-nil, each method is restricted to
 
 (defun boogie-friends-profiler-interact ()
   (boogie-friends-save-or-error)
-  (let* ((msg        (if boogie-friends-last-trace "Function to complete (TAB for completion): "
+  (let* ((msg        (if boogie-friends-last-trace "Function to profile: "
                        "Function name (use \\[boogie-friends-trace] first to enable completion): "))
          (prompt     (substitute-command-keys msg))
          (collection (boogie-friends-profiler-interact-prepare-completions))
@@ -316,6 +335,19 @@ non-nil, each method is restricted to
          (cleaned-up (if (member selected collection) (replace-regexp-in-string " ([^ ]*)$" "" selected) selected))
          (proc       (unless (member cleaned-up `(nil "" ,boogie-friends-profiler-whole-file-choice)) cleaned-up)))
   (list proc (consp current-prefix-arg))))
+
+(defun boogie-friends-profiler-prepare (func use-alternate)
+  (-when-let* ((profiler-prepare-fn (boogie-friends-mode-var 'profiler-prepare-fn)))
+    (funcall profiler-prepare-fn use-alternate
+             (lambda (source-path) (boogie-friends-profile-internal func use-alternate source-path)))))
+
+(defun boogie-friends-profile-internal (func use-alternate source-path)
+  (-when-let* ((log-path (expand-file-name "z3.log" (file-name-directory source-path))) ;; FIXME
+               (profiler-args (boogie-friends-get-profile-args nil func)) ;; FIXME nil instead of log-path
+               (compilation-buffer (boogie-friends--compile profiler-args use-alternate "profile"))
+               (profiler-post-action (boogie-friends-make-profiler-callback source-path log-path compilation-buffer)))
+    (with-current-buffer compilation-buffer
+      (add-hook 'compilation-finish-functions profiler-post-action nil t))))
 
 (defun boogie-friends-profile (func &optional use-alternate)
   "Profile a given function FUNC, or the whole file is FUNC is nil.
@@ -326,11 +358,7 @@ method profiling stops after `boogie-friends-profiler-timeout'
 seconds."
   (interactive (boogie-friends-profiler-interact))
   (boogie-friends-save-or-error)
-  (-when-let* ((profiler-args (boogie-friends-get-profile-args func))
-               (compilation-buffer (boogie-friends--compile profiler-args use-alternate "profile"))
-               (profiler-post-action (boogie-friends-make-profiler-callback (current-buffer) compilation-buffer)))
-    (with-current-buffer compilation-buffer
-      (add-hook 'compilation-finish-functions profiler-post-action nil t))))
+  (boogie-friends-profiler-prepare func use-alternate))
 
 (defmacro boogie-friends-with-click (event mode set-point &rest body)
   "Run BODY in the buffer pointed to by EVENT, if in mode MODE.
