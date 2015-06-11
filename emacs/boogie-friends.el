@@ -105,6 +105,14 @@ Only for temporary assignment of internal values")
 Use this hook to alter settings common to Dafny and Boogie, such
 as prettification.")
 
+(defconst boogie-friends-trace-entry-regexp
+  "^Verifying\\s-*\\([^ ]+\\)\\s-*...\\s-*\\[\\(\\([^ ]+\\)\\s-+s\\),.*\\]"
+  "Regexp used to locate useful timings from a Boogie trace.")
+
+(defconst boogie-friends-trace-entry-spec
+  (list boogie-friends-trace-entry-regexp '(1 font-lock-function-name-face) '(2 font-lock-constant-face))
+  "Font-lock keyword spec to highlight `boogie-friends-trace-entry-regexp'.")
+
 (defconst boogie-friends-font-lock-var "\\_<\\(\\sw\\(?:\\sw\\|\\s_\\)*\\)\\_>"
   "Regexp used to detect variable names")
 
@@ -229,6 +237,7 @@ With prefix USE-ALTERNATE, run the checker with alternate args."
                (compilation-buffer (boogie-friends--compile trace-args (consp use-alternate) "trace"))
                (trace-parser (boogie-friends-make-trace-callback (current-buffer) compilation-buffer)))
     (with-current-buffer compilation-buffer
+      (font-lock-add-keywords nil (list boogie-friends-trace-entry-spec))
       (add-hook 'compilation-finish-functions trace-parser nil t))))
 
 (defun boogie-friends-ensure-buffer-ro (buffer-fname)
@@ -398,15 +407,11 @@ If REV is non-nil, cycle in the opposite order."
   (when (functionp indent-line-function)
     (funcall indent-line-function)))
 
-(defconst boogie-friends-trace-entry-regexp
-  "^Verifying\\s-*\\([^ ]+\\)\\s-*...\\s-*\\[\\([^ ]+\\)\\s-+s,.*\\]"
-  "Regexp used to locate useful timings from a Boogie trace.")
-
 (defun boogie-friends-parse-trace-entry ()
   "Parse one entry from a Boogie trace."
   (cons
    (match-string-no-properties 1)
-   (string-to-number (match-string-no-properties 2))))
+   (string-to-number (match-string-no-properties 3))))
 
 (defun boogie-friends-parse-trace ()
   "Parse a Boogie trace.
