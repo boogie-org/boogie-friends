@@ -295,7 +295,7 @@ Used by `boogie-friends-trace', which see. If NO-TIMEOUT is
 non-nil, each method is restricted to
 `boogie-friends-profiler-timeout' seconds."
   (append (list "/z3opt:TRACE=true")
-          (when log-path (format "/z3opt:TRACE_FILE_NAME=\"%s\"" log-path)) ;; FIXME
+          (when log-path (list (format "/z3opt:TRACE_FILE_NAME=\"%s\"" log-path)))
           (when (stringp proc) (list (format "/proc:%s" proc)))
           (boogie-friends-get-timeout-arg)))
 
@@ -342,8 +342,8 @@ non-nil, each method is restricted to
              (lambda (source-path) (boogie-friends-profile-internal func use-alternate source-path)))))
 
 (defun boogie-friends-profile-internal (func use-alternate source-path)
-  (-when-let* ((log-path (expand-file-name "z3.log" (file-name-directory source-path))) ;; FIXME
-               (profiler-args (boogie-friends-get-profile-args nil func)) ;; FIXME nil instead of log-path
+  (-when-let* ((log-path (expand-file-name (concat (file-name-nondirectory source-path) ".log") (file-name-directory source-path)))
+               (profiler-args (boogie-friends-get-profile-args log-path func))
                (compilation-buffer (boogie-friends--compile profiler-args use-alternate "profile"))
                (profiler-post-action (boogie-friends-make-profiler-callback source-path log-path compilation-buffer)))
     (with-current-buffer compilation-buffer
