@@ -406,7 +406,8 @@ If REV is non-nil, cycle in the opposite order."
   (interactive "p")
   (self-insert-command arg)
   (when (functionp indent-line-function)
-    (funcall indent-line-function)))
+    (save-excursion
+      (funcall indent-line-function))))
 
 (defun boogie-friends-parse-trace-entry ()
   "Parse one entry from a Boogie trace."
