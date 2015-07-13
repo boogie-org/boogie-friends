@@ -77,15 +77,21 @@
   "Symbols used in conjunction with `prettify-minor-mode'.")
 
 (defconst boogie-friends-message-pattern
-  '(message (1+ nonl) (? "\nExecution trace:\n"
-                         (1+ "    " (1+ nonl) (? "\n"))))
+  '(message (+ nonl)
+            (? "\nExecution trace:")
+            (* "\n    " (+ nonl)))
   "See `boogie-friends-error-patterns'.")
 
 (defconst boogie-friends-error-patterns
-  `((error bol (file-name) "(" line "," column "):" (or " Error " " Error: ")
-           ,boogie-friends-message-pattern)
-    (warning bol (file-name) "(" line "," column "):" " Related location: "
-             ,boogie-friends-message-pattern))
+  (let ((header '(bol (file-name) "(" line "," column "):"))) ;; FIXME (? "[" (not (any "]")) "]")
+    `((error ,@header " Error" (? ":") " "
+             ,boogie-friends-message-pattern)
+      (warning ,@header " Warning" (? ":") " "
+               ,boogie-friends-message-pattern)
+      (warning ,@header " Related location: "
+               ,boogie-friends-message-pattern)
+      (info ,@header " Info" (? ":") " "
+            ,boogie-friends-message-pattern)))
   "Error patterns for the Dafny and Boogie checkers.")
 
 (defcustom boogie-friends-profiler-timeout 30
@@ -96,6 +102,10 @@ must an whole number of seconds.")
 (defvar boogie-friends--prover-additional-args nil
   "Storage for extra prover arguments.
 Only for temporary assignment of internal values")
+
+(defvar boogie-friends--prover-running-in-foreground-p nil
+  "Bolean flag indicating whether the prover is being explicitly invoked.
+If non-nil, background args will be ommitted from prover invocations.")
 
 (defvar boogie-friends-last-trace nil
   "Cache of the last trace information obtained for this buffer.")
@@ -170,6 +180,7 @@ greedily (the opening bracket is matched by \\s_).")
   "Compute the set of arguments to pass to the prover."
   (append (boogie-friends-mode-val 'prover-args)
           (boogie-friends-mode-val 'prover-custom-args)
+          (unless boogie-friends--prover-running-in-foreground-p (boogie-friends-mode-val 'prover-background-args))
           (boogie-friends-mode-val 'prover-local-args)
           boogie-friends--prover-additional-args))
 
@@ -186,7 +197,9 @@ greedily (the opening bracket is matched by \\s_).")
 (defun boogie-friends--compile (additional-arguments use-alternate name)
   "Start compiling the current file.
 Add ADDITIONAL-ARGUMENTS to usual command line, placing them
-after alternate prover args if USE-ALTERNATE is non-nil.  This function
+after alternate prover args if USE-ALTERNATE is non-nil.  Also
+set `boogie-friends--prover-running-in-foreground-p', ensuring
+that background args are not passed to the prover.  This function
 is useful to implement user-initiated verification, as well as
 tracing.  Returns the compile buffer."
   (boogie-friends-save-or-error)
@@ -195,6 +208,7 @@ tracing.  Returns the compile buffer."
       (user-error "Prover %s is improperly configured" checker))
     (let* ((custom-args (and use-alternate (boogie-friends-mode-val 'prover-alternate-args)))
            (boogie-friends--prover-additional-args (append custom-args additional-arguments))
+           (boogie-friends--prover-running-in-foreground-p t)
            (command (flycheck-checker-shell-command checker))
            (buffer (compilation-start command nil (boogie-friends-compilation-buffer-namer name))))
       (with-current-buffer buffer

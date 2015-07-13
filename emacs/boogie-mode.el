@@ -59,9 +59,15 @@ few extra flags in addition to the default ones."
   :group 'boogie)
 
 (defcustom boogie-prover-custom-args '()
-  "Extra arguments to pass to Boogie when checking a file.
+  "Extra arguments to pass to Boogie.
 These come in addition to `boogie-prover-args'."
   :group 'boogie)
+
+(defcustom boogie-prover-background-args '()
+  "Extra arguments to pass to Boogie for background verification.
+These come in addition to `boogie-prover-args' and
+`boogie-prover-custom-args'."
+  :group 'dafny)
 
 (defcustom boogie-prover-local-args '()
   "Extra arguments to pass to Boogie when checking a file.

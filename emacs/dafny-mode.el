@@ -89,8 +89,14 @@ few extra flags in addition to the default ones."
   :group 'dafny)
 
 (defcustom dafny-prover-custom-args '()
-  "Extra arguments to pass to Dafny when checking a file.
+  "Extra arguments to pass to Dafny.
 These come in addition to `dafny-prover-args'."
+  :group 'dafny)
+
+(defcustom dafny-prover-background-args '()
+  "Extra arguments to pass to Dafny for background verification.
+These come in addition to `dafny-prover-args' and
+`dafny-prover-custom-args'."
   :group 'dafny)
 
 (defcustom dafny-prover-local-args '()
