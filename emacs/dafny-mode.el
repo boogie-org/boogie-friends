@@ -144,9 +144,10 @@ the return value."
    (cons dafny-modifiers-regexp font-lock-preprocessor-face)
    (cons dafny-specifiers-regexp font-lock-doc-face)
    (cons dafny-builtins-regexp font-lock-builtin-face)
+   (cons "!\\_<in\\_>" font-lock-keyword-face) ;; Needed because '!' is not part of a symbol, so adding '!in' to keywords doesn't work
    (cons dafny-keywords-regexp font-lock-keyword-face)
    (cons dafny-types-regexp font-lock-type-face)
-   (list "\\(!\\)\\([^=]\\|$\\)" 1 font-lock-negation-char-face)
+   (list "\\(!\\)\\([^=i]\\|$\\)" 1 font-lock-negation-char-face)
    (list "\\(\\_<forall\\_>\\).*::"
          '(1 (compose-region (match-beginning 1) (match-end 1) ?∀))
          '(1 font-lock-keyword-face append)))
@@ -359,7 +360,8 @@ open Dafny buffers."
 
 \\{dafny-mode-map}"
   :syntax-table dafny-mode-syntax-table
-  ;; (add-to-list 'boogie-friends-symbols-alist '("*" . ?×))
+  (add-to-list 'boogie-friends-symbols-alist '("in" . ?∈))
+  (add-to-list 'boogie-friends-symbols-alist '("!in" . ?∉))
   (boogie-friends-mode-setup)
   (set (make-local-variable 'indent-line-function) #'dafny-indent)
   (set (make-local-variable 'indent-region-function) nil)
