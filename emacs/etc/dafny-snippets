@@ -52,6 +52,19 @@ function method ${1:$name<T>}(${2:$params}): ${3:$return-type}${4:
   ${12:$body}
 }
 
+predicate ${1:$name<T>}(${2:$params}) {
+  ${4:$body}
+}
+
+predicate ${1:$name<T>}(${2:$params})${4:
+  requires ${5:$pre-condition}}${6:
+  modifies ${7:$frame}}${8:
+  ensures ${9:$post-condition}}${10:
+  decreases ${11:$rank}}
+{
+  ${12:$body}
+}
+
 class ${$name<T>} {
   ${$class-body}
 }

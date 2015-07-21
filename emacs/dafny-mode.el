@@ -261,6 +261,16 @@ Useful to ignore mouse-up events handled mouse-down events."
                 (_        prev-offset))))))
   (skip-chars-forward " "))
 
+(defun dafny-indent-keep-position ()
+  "Indent current line, minimally moving point.
+That is, leaves the point in place if it is already beyond the
+first non-blank character of that line, and moves it to the first
+character in the line otherwise."
+  (interactive)
+  (let ((position (save-excursion (dafny-indent) (point))))
+    (when (> position (point))
+      (goto-char position))))
+
 (defun dafny-jump-to-boogie-internal (line &optional buffer)
   "Jump to translation of LINE in boogie buffer BUFFER.
 Attemps to guess the right buffer if BUFFER is nil.  If unable to
@@ -347,6 +357,7 @@ open Dafny buffers."
   "Flycheck checker for the Dafny programming language."
   :command '("dafny" (eval (boogie-friends-compute-prover-args)) source-inplace)
   :error-patterns boogie-friends-error-patterns
+  :error-filter #'flycheck-increment-error-columns
   :modes '(dafny-mode))
 
 (add-to-list 'flycheck-checkers 'dafny)
@@ -363,7 +374,7 @@ open Dafny buffers."
   (add-to-list 'boogie-friends-symbols-alist '("in" . ?∈))
   (add-to-list 'boogie-friends-symbols-alist '("!in" . ?∉))
   (boogie-friends-mode-setup)
-  (set (make-local-variable 'indent-line-function) #'dafny-indent)
+  (set (make-local-variable 'indent-line-function) #'dafny-indent-keep-position)
   (set (make-local-variable 'indent-region-function) nil)
   (add-to-list (make-local-variable 'font-lock-extra-managed-props) 'composition)
   (electric-indent-local-mode 1))
