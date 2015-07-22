@@ -93,7 +93,7 @@ few extra flags in addition to the default ones."
 These come in addition to `dafny-prover-args'."
   :group 'dafny)
 
-(defcustom dafny-prover-background-args '()
+(defcustom dafny-prover-background-args '("/timeLimit:20")
   "Extra arguments to pass to Dafny for background verification.
 These come in addition to `dafny-prover-args' and
 `dafny-prover-custom-args'."
@@ -350,6 +350,24 @@ open Dafny buffers."
             (beginning-of-line)
             (recenter))))
       (current-buffer))))
+
+(defun dafny-file-exists-or-error (fname &optional if-nil if-missing)
+  "Return FNAME, unless it does not exist as a file."
+  (if fname
+      (if (file-exists-p fname)
+          fname
+        (error "%s" (or if-missing (format "Not found: %s" fname))))
+    (error "%s" (or if-nil "No file found"))))
+
+;;;###autoload
+(defun dafny-test-suite-open-diff (dfy-name)
+  (interactive (list (progn (require 'ffap) (ffap-file-at-point))))
+  (-when-let* ((dfy    (dafny-file-exists-or-error dfy-name "No file at point"))
+               (expect (dafny-file-exists-or-error (concat dfy-name ".expect")))
+               (output (dafny-file-exists-or-error
+                        (expand-file-name (concat (file-name-nondirectory dfy-name) ".tmp")
+                                          (expand-file-name "Output" (file-name-directory dfy-name))))))
+    (diff expect output)))
 
 (flycheck-def-executable-var dafny "dafny")
 

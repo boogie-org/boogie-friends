@@ -77,20 +77,23 @@
   "Symbols used in conjunction with `prettify-minor-mode'.")
 
 (defconst boogie-friends-message-pattern
-  '(message (+ nonl)
+  '(message (* nonl)
             (? "\nExecution trace:")
             (* "\n    " (+ nonl)))
   "See `boogie-friends-error-patterns'.")
 
 (defconst boogie-friends-error-patterns
-  (let ((header '(bol (file-name) "(" line "," column "):"))) ;; FIXME (? "[" (not (any "]")) "]")
-    `((error ,@header " Error" (? ":") " "
+  (let ((header     '(bol (file-name) "(" line "," column "): "))
+        (colonspace '((? ":") (? " "))))
+    `((error ,@header "Error" ,@colonspace
              ,boogie-friends-message-pattern)
-      (warning ,@header " Warning" (? ":") " "
+      (error ,@header "Timed out on" (? " " (+ (char "A-Z")) (+ (char "0-9"))) ,@colonspace
+             ,boogie-friends-message-pattern)
+      (warning ,@header "Warning" ,@colonspace
                ,boogie-friends-message-pattern)
-      (warning ,@header " Related location: "
+      (warning ,@header "Related location" ,@colonspace
                ,boogie-friends-message-pattern)
-      (info ,@header " Info" (? ":") " "
+      (info ,@header "Info" ,@colonspace
             ,boogie-friends-message-pattern)))
   "Error patterns for the Dafny and Boogie checkers.")
 
