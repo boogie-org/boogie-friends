@@ -40,7 +40,8 @@
 (require 'dafny-docs)
 
 (defconst dafny-defuns '("class" "codatatype" "colemma" "constructor" "copredicate" "datatype" "function"
-                         "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"))
+                         "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
+                         "function method" "predicate method"))
 
 (defconst dafny-specifiers '("decreases" "ensures" "free" "invariant" "modifies" "reads" "requires"))
 
@@ -81,7 +82,11 @@
   "Name of file holding Dafny snippets."
   :group 'dafny)
 
-(defcustom dafny-prover-args '("/enhancedErrorMessages:1" "/compile:0" "/nologo")
+(defcustom dafny-attributes-repo "etc/dafny-attributes"
+  "Name of file holding Dafny attributes."
+  :group 'dafny)
+
+(defcustom dafny-prover-args '("/compile:0" "/nologo")
   "Arguments to pass to Dafny when checking a file.
 The name of the file itself is added last.  You can override all
 arguments here, or use `dafny-prover-custom-args' to add just a
@@ -115,22 +120,37 @@ verification (\\[boogie-friends-verify]) with a prefix arg."
 (defconst dafny-snippets nil
   "Cache of all known Dafny snippets, loaded from `dafny-snippets-repo'.")
 
+(defun dafny-load-snippets-collection (repo place force-reload interactive)
+  "Load snippets from REPO into PLACE.
+Loading happens only is PLACE's value is nil, or if FORCE-RELOAD
+in non-nil."
+  (unless (and (not force-reload) (symbol-value place))
+    (let* ((docs-fname (expand-file-name repo boogie-friends-directory))
+           (snippets (with-temp-buffer (insert-file-contents docs-fname) (buffer-string))))
+      (set place (cl-loop for index = 0 then (1+ index)
+                          for line in (split-string snippets "\n\n" t)
+                          for trimmed = (replace-regexp-in-string "\\(\\`\n+\\|\n+\\'\\)" "" line)
+                          for cleaned = (boogie-friends-cleanup-snippet trimmed)
+                          collect (propertize cleaned 'index index 'snippet trimmed)))))
+  (if interactive
+      (message "Loaded %d snippets" (length (symbol-value place)))
+    (symbol-value place)))
+
 (defun dafny-init-snippets (&optional force-reload interactive)
   "Initialize and return `dafny-snippets'.
 Reloading only happens if `dafny-snippets' is nil or if
 FORCE-RELOAD is non-nil.  A non-nil INTERACTIVE value suppresses
 the return value."
   (interactive '(t t))
-  (setq dafny-snippets
-        (or (and (not force-reload) dafny-snippets)
-            (let* ((docs-fname (expand-file-name dafny-snippets-repo boogie-friends-directory))
-                   (snippets (with-temp-buffer (insert-file-contents docs-fname) (buffer-string))))
-              (cl-loop for index = 0 then (1+ index)
-                       for line in (split-string snippets "\n\n" t)
-                       for trimmed = (replace-regexp-in-string "\\(\\`\n+\\|\n+\\'\\)" "" line)
-                       for cleaned = (boogie-friends-cleanup-snippet trimmed)
-                       collect (propertize cleaned 'index index 'snippet trimmed)))))
-  (unless interactive dafny-snippets))
+  (dafny-load-snippets-collection dafny-snippets-repo 'dafny-snippets force-reload interactive))
+
+(defun dafny-init-attributes (&optional force-reload interactive)
+  "Initialize and return `dafny-attributes'.
+Reloading only happens if `dafny-attributes' is nil or if
+FORCE-RELOAD is non-nil.  A non-nil INTERACTIVE value suppresses
+the return value."
+  (interactive '(t t))
+  (dafny-load-snippets-collection dafny-attributes-repo 'dafny-attributes force-reload interactive))
 
 (defconst dafny-font-lock-keywords ;; FIXME type constraints
   (list
@@ -161,6 +181,7 @@ Useful to ignore mouse-up events handled mouse-down events."
 (defvar dafny-mode-map
   (let ((map (boogie-friends-make-keymap t)))
     (define-key map (kbd "C-c C-a") 'boogie-friends-translate)
+    (define-key map (kbd "C-c C-b") 'dafny-insert-attribute)
     (define-key map (kbd "C-c C-j") 'dafny-jump-to-boogie)
     (define-key map (kbd "C-c C-?") 'dafny-docs-open) ;; TODO enable by default?
     (define-key map (kbd "<C-mouse-1>") 'dafny-ignore-event)
@@ -322,8 +343,8 @@ Symbol at point must be a function name. Search is restricted to
 open Dafny buffers."
   (interactive "e") ;; FIXME would be much better to only show the lines below the definition
   (boogie-friends-with-click event 'dafny-mode nil
-    (-when-let* ((fun-name (thing-at-point 'symbol)))
-      (occur-1 (concat "^" dafny-extended-defun-regexp "\\s-*\\_<" (regexp-quote fun-name) "\\_>") 3
+    (-when-let* ((fun-name (thing-at-point 'word)))
+      (occur-1 (concat "^" dafny-extended-defun-regexp "\\s-*\\<" (regexp-quote fun-name) "\\>") 3
                (cl-loop for b being the buffers when (string-match-p "\\.dfy\\'" (buffer-name b)) collect b))
       (-when-let* ((buf (get-buffer "*Occur*")))
         (with-current-buffer buf
@@ -361,13 +382,55 @@ open Dafny buffers."
 
 ;;;###autoload
 (defun dafny-test-suite-open-diff (dfy-name)
-  (interactive (list (progn (require 'ffap) (ffap-file-at-point))))
+  (interactive (list (progn (require 'ffap) (with-no-warnings (ffap-file-at-point)))))
   (-when-let* ((dfy    (dafny-file-exists-or-error dfy-name "No file at point"))
                (expect (dafny-file-exists-or-error (concat dfy-name ".expect")))
                (output (dafny-file-exists-or-error
                         (expand-file-name (concat (file-name-nondirectory dfy-name) ".tmp")
                                           (expand-file-name "Output" (file-name-directory dfy-name))))))
     (diff expect output)))
+
+(defun dafny-verify-false ()
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (let ((re (concat "^" dafny-extended-defun-regexp "\\>")))
+      (while (re-search-forward re nil t)
+        (replace-match "\\& {:verify false}" t)))))
+
+(defun dafny-verify-true ()
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (let ((re (concat "^\\(" dafny-extended-defun-regexp "\\>\\)\\s-*{:verify\\s-*\\(?:true\\|false\\)\\s-*}")))
+      (while (re-search-forward re nil t)
+        (replace-match "\\1")))))
+
+(defun dafny-attribute-prefix ()
+  (when (save-excursion (skip-syntax-backward "w_")
+                        (looking-back (regexp-quote "{:") (- (point) 2)))
+    (company-grab-symbol)))
+
+(defun dafny-attributes-backend (command &optional arg &rest ignored)
+  "A boogie-mode backend for attributes."
+  (interactive (list 'interactive))
+  (pcase command
+    (`interactive (company-begin-backend 'dafny-attributes-backend))
+    (`prefix (dafny-attribute-prefix))
+    (`candidates (boogie-friends-candidates-snippet arg (dafny-init-attributes)))
+    (`match (get-text-property 0 'match arg))
+    (`ignore-case t)
+    (`sorted t)
+    (`annotation "<snip>")
+    (`post-completion (boogie-friends-insert-snippet arg))
+    (`no-cache t)
+    (`require-match 'never)))
+
+(defun dafny-insert-attribute ()
+  (interactive)
+  (insert "{:}")
+  (backward-char 1)
+  (call-interactively #'dafny-attributes-backend))
 
 (flycheck-def-executable-var dafny "dafny")
 

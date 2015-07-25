@@ -1,0 +1,10 @@
+no_inline
+
+no_trigger
+
+induction ${$variables|false}
+
+verify ${true|false}
+
+trigger ${$expressions}
+
