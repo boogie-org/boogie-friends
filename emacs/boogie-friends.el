@@ -82,6 +82,21 @@
             (* "\n    " (+ nonl)))
   "See `boogie-friends-error-patterns'.")
 
+(defface boogie-friends-flycheck-tooltip
+  '((((supports :underline)) :underline (:color "ForestGreen"))
+    (t :underline t :inherit success))
+  "Boogie-friends face for text that has a tooltip."
+  :group 'flycheck-faces)
+
+(put 'flycheck-tooltip-overlay 'help-echo "??")
+(put 'flycheck-tooltip-overlay 'face 'boogie-friends-flycheck-tooltip)
+
+(flycheck-define-error-level 'tooltip
+  :severity -100
+  :overlay-category 'flycheck-tooltip-overlay
+  :fringe-bitmap nil :fringe-face nil
+  :error-list-face 'flycheck-error-list-info)
+
 (defconst boogie-friends-error-patterns
   (let ((header     '(bol (file-name) "(" line "," column "): "))
         (colonspace '((? ":") (? " "))))
@@ -93,8 +108,8 @@
                ,boogie-friends-message-pattern)
       (warning ,@header "Related location" ,@colonspace
                ,boogie-friends-message-pattern)
-      (info ,@header "Info" ,@colonspace
-            ,boogie-friends-message-pattern)))
+      (tooltip ,@header "Info" ,@colonspace
+               ,boogie-friends-message-pattern)))
   "Error patterns for the Dafny and Boogie checkers.")
 
 (defcustom boogie-friends-profiler-timeout 30
@@ -577,6 +592,7 @@ Loads symbols from `boogie-friends-symbols-alist'."
   "Setup `flycheck-mode' in the current buffer.
 Uses `boogie-friends-mode-name' as the name of the checker."
   (flycheck-mode)
+  (set (make-local-variable 'flycheck-navigation-minimum-level) 'info)
   (let ((executable (flycheck-checker-executable (intern (boogie-friends-mode-name)))))
     (unless (executable-find executable)
       (message "Could not start checker for %s: '%s' not found. Please fix `flycheck-%s-executable'."
