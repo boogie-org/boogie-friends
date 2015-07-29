@@ -76,12 +76,6 @@
                                          ("exists" . ?∃) ("::" . ?∙))
   "Symbols used in conjunction with `prettify-minor-mode'.")
 
-(defconst boogie-friends-message-pattern
-  '(message (* nonl)
-            (? "\nExecution trace:")
-            (* "\n    " (+ nonl)))
-  "See `boogie-friends-error-patterns'.")
-
 (defface boogie-friends-flycheck-tooltip
   '((((supports :underline)) :underline (:color "ForestGreen"))
     (t :underline t :inherit success))
@@ -93,14 +87,22 @@
 
 (flycheck-define-error-level 'tooltip
   :severity -100
+  :compilation-level 0
   :overlay-category 'flycheck-tooltip-overlay
   :fringe-bitmap nil :fringe-face nil
   :error-list-face 'flycheck-error-list-info)
 
+(defconst boogie-friends-message-pattern
+  '(message (* nonl)
+            (? "\nExecution trace:")
+            (* "\n    " (+ nonl)))
+  "See `boogie-friends-error-patterns'.")
+
 (defconst boogie-friends-error-patterns
   (let ((header     '(bol (file-name) "(" line "," column "): "))
         (colonspace '((? ":") (? " "))))
-    `((error ,@header "Error" ,@colonspace
+    `((error "*** Error: " (message)) ;; Startup errors
+      (error ,@header "Error" ,@colonspace
              ,boogie-friends-message-pattern)
       (error ,@header "Timed out on" (? " " (+ (char "A-Z")) (+ (char "0-9"))) ,@colonspace
              ,boogie-friends-message-pattern)
@@ -221,12 +223,12 @@ that background args are not passed to the prover.  This function
 is useful to implement user-initiated verification, as well as
 tracing.  Returns the compile buffer."
   (boogie-friends-save-or-error)
-  (let ((checker (intern (boogie-friends-mode-name))))
+  (let ((checker (intern (boogie-friends-mode-name)))
+        (boogie-friends--prover-running-in-foreground-p t))
     (unless (flycheck-may-use-checker checker)
       (user-error "Prover %s is improperly configured" checker))
     (let* ((custom-args (and use-alternate (boogie-friends-mode-val 'prover-alternate-args)))
            (boogie-friends--prover-additional-args (append custom-args additional-arguments))
-           (boogie-friends--prover-running-in-foreground-p t)
            (command (flycheck-checker-shell-command checker))
            (buffer (compilation-start command nil (boogie-friends-compilation-buffer-namer name))))
       (with-current-buffer buffer
@@ -592,7 +594,10 @@ Loads symbols from `boogie-friends-symbols-alist'."
   "Setup `flycheck-mode' in the current buffer.
 Uses `boogie-friends-mode-name' as the name of the checker."
   (flycheck-mode)
+  (define-key flycheck-command-map "q" #'flycheck-stop)
   (set (make-local-variable 'flycheck-navigation-minimum-level) 'info)
+  (set (make-local-variable 'flycheck-error-list-minimum-level) 'info)
+  (set (make-local-variable 'flycheck-display-errors-function) #'boogie-friends-display-first-lines)
   (let ((executable (flycheck-checker-executable (intern (boogie-friends-mode-name)))))
     (unless (executable-find executable)
       (message "Could not start checker for %s: '%s' not found. Please fix `flycheck-%s-executable'."
@@ -603,7 +608,6 @@ Uses `boogie-friends-mode-name' as the name of the checker."
   (unless minimal
     (set (make-local-variable 'tab-width) 2)
     (set (make-local-variable 'font-lock-defaults) (list (boogie-friends-mode-var 'font-lock-keywords)))
-    (set (make-local-variable 'flycheck-display-errors-function) #'boogie-friends-display-first-lines)
     (set (make-local-variable 'comment-start) "//")
     (set (make-local-variable 'comment-start-skip) "/[*/]\\s-+")
     (make-local-variable 'company-transformers)
