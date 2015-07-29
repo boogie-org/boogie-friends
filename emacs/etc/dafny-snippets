@@ -4,7 +4,7 @@ var ${$name} := ${$value};
 
 var ${$name}: ${$type} := ${$value};
 
-method ${1:$name<T>}(${2:$params}) ${3:returns (${4:$vars})} {
+method ${1:$name<T>}(${2:$params}) ${3:returns (${4:$vars}) }{
   ${5:$body}
 }
 
@@ -30,7 +30,7 @@ constructor ${1:$name<T>}(${2:$params}) ${3:
   ${11:$body}
 }
 
-function ${1:$name<T>}(${2:$params}): ${3:$return-type} {
+function ${1:$name<T>}(${2:$params}): ${3:$return-type }{
   ${4:$body}
 }
 
