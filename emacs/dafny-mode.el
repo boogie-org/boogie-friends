@@ -38,6 +38,7 @@
 (require 'boogie-friends)
 (require 'boogie-mode)
 (require 'dafny-docs)
+(require 'inferior-dafny)
 
 (defconst dafny-defuns '("class" "codatatype" "colemma" "constructor" "copredicate" "datatype" "function"
                          "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
@@ -86,7 +87,7 @@
   "Name of file holding Dafny attributes."
   :group 'dafny)
 
-(defcustom dafny-prover-interface 'cli
+(defcustom dafny-verification-backend 'cli
   "Which interface to use for on-the-fly verification.
 
 One of `cli', `server', or nil.
@@ -451,7 +452,7 @@ open Dafny buffers."
   (call-interactively #'dafny-attributes-backend))
 
 (defun dafny-predicate ()
-  (or (eq dafny-prover-interface 'cli)
+  (or (eq dafny-verification-backend 'cli)
       boogie-friends--prover-running-in-foreground-p))
 
 (flycheck-def-executable-var dafny "dafny")

@@ -181,7 +181,7 @@ For example, you can add the following to the top of a file:
 
 * If you're having issues with the Dafny server, try using the simpler CLI-based backend by adding the following to your `.emacs` and restarting (if you run into such issues, though, we'd love to hear about them):
 ```elisp
-(setq dafny-prover-interface 'cli)
+(setq dafny-verification-backend 'cli)
 ```
 (note that you can also disable on-the-fly verification by replacing `'cli` with `nil`)
 

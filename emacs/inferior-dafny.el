@@ -113,10 +113,11 @@
 
 (require 'json)
 (require 'flycheck)
-(require 'dafny-mode)
 (require 'boogie-friends)
 
 ;;; Customization
+
+(defvar dafny-verification-backend) ;; forward declaration (see dafny-mode.el)
 
 (flycheck-def-executable-var inferior-dafny "dafny-server.exe")
 
@@ -530,7 +531,7 @@ by T-MESSAGE or NIL-MESSAGE."
 
 (defun inferior-dafny-predicate ()
   "Predicate for `flycheck-define-generic-checker'."
-  (or (eq dafny-prover-interface 'server)
+  (or (eq dafny-verification-backend 'server)
       (bound-and-true-p boogie-friends--prover-running-in-foreground-p)))
 
 ;;;###autoload
