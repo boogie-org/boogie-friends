@@ -122,17 +122,18 @@
 (flycheck-def-executable-var inferior-dafny "dafny-server.exe")
 
 (defvar inferior-dafny--in-memory nil
-  "If nil, pass the buffer contents as part of queries to the server.
+  "If non-nil, pass the buffer contents as part of queries to the server.
 
-When non-nil, the contents of the buffer are saved to a temporary
+When nil, the contents of the buffer are saved to a temporary
 location, and the server is directed to that location.")
 
 (defvar inferior-dafny--write-snapshots nil
   "If non-nil, save a copy of the buffer after every query.")
 
-(defvar inferior-dafny--transcript-name "dafny-client.transcript")
+(defvar inferior-dafny--transcript-name "dafny-client.transcript"
+  "A file name under which to save session transcripts.")
 
-(defvar inferior-dafny--log-queries nil
+(defvar inferior-dafny--write-transcript nil
   "If non-nil, write queries to a session transcript.
 
 The transcript file is saved under the name specified in variable
@@ -282,10 +283,12 @@ when post-processing errors.")
   (let ((fname (format-time-string "%F-%H-%M-%S-%N.dfy")))
     (write-region nil nil fname)))
 
-(defun inferior-dafny-log-query (query)
-  "Log QUERY to file when appropriate."
-  (when inferior-dafny--log-queries
-    (append-to-file query nil inferior-dafny--transcript-name)))
+(defun inferior-dafny-update-transcript ()
+  "Log current query to file when appropriate."
+  (when inferior-dafny--write-transcript
+    (let* ((inferior-dafny--in-memory t)
+           (query (inferior-dafny-prepare-query)))
+      (append-to-file query nil inferior-dafny--transcript-name))))
 
 (defun inferior-dafny-verify (_checker callback)
   "Issue a 'verify' query to the server, returning immediately.
@@ -307,9 +310,8 @@ If `inferior-dafny--busy' is non-nil, complain loudly."
         inferior-dafny--callback callback)
   (when inferior-dafny--write-snapshots
     (inferior-dafny-write-snapshot))
-  (let ((query (inferior-dafny-prepare-query)))
-    (inferior-dafny-log-query query)
-    (process-send-string inferior-dafny--process query)))
+  (inferior-dafny-update-transcript)
+  (process-send-string inferior-dafny--process (inferior-dafny-prepare-query)))
 
 (defmacro inferior-dafny-with-parent-buffer (proc-or-buf &rest body)
   "Find Dafny buffer that spawned PROC-OR-BUF and run BODY there."
@@ -463,7 +465,7 @@ If KILL-BUFFER is non-nil, get rid of its output buffer as well."
     (inferior-dafny-debug "Killing existing inferior dafny process")
     (kill-process inferior-dafny--process))
   (when kill-buffer
-    (when-let (buf (inferior-dafny-process-buffer))
+    (-when-let* ((buf (inferior-dafny-process-buffer)))
       (kill-buffer buf)))
   (inferior-dafny-killed))
 
