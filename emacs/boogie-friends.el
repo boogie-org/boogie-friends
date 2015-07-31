@@ -44,6 +44,7 @@
 ;; * (Experimental) Navigation between Dafny and Boogie source files
 ;; * (Some support for) indentation
 ;; * (Some support for) jumping to a definition
+;; * (Experimental) Support for using Dafny as a verification server
 ;;
 ;; See https://github.com/boogie-org/boogie-friends/ for a full description. The
 ;; documentation that accompanies certain snippets in dafny-mode was not written
@@ -208,7 +209,7 @@ greedily (the opening bracket is matched by \\s_).")
   (let ((buf (current-buffer)))
     (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
   (unless (and buffer-file-name (not (buffer-modified-p)))
-    (error "Cannot run this command on a dirty source file")))
+    (error "Please save your file before running this command.")))
 
 (defun boogie-friends-compilation-buffer-namer (infix)
   (let ((name (format "*%s-%s-%s*" (boogie-friends-mode-name) infix buffer-file-name)))

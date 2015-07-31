@@ -6,7 +6,8 @@ A collection of tools for interacting with Boogie and related languages.
 
 The `boogie-friends` package is an experimental collection of Emacs modes for
 writing verified programs in languages of the Boogie family. Dafny and Boogie
-are the two currently supported languages. Features include:
+are the two currently supported languages, and limited support for z3 SMT files
+is also included. Npotable features are listed below:
 
 * Syntax highlighting
 * Real-time compilation (using `flycheck`)
@@ -21,6 +22,7 @@ In addition, the Dafny mode offers:
 * (Experimental) Navigation between Dafny and Boogie source files
 * (Some support for) indentation
 * (Some support for) jumping to a definition
+* (Experimental) support for using Dafny as a verification server. This means that Emacs spawns a server process, and uses Dafny's caching facilities to (massively) improve reactivity.
 
 ### Some pictures:
 
@@ -102,7 +104,7 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
 #### General
 
 * Completion, indentation, snippets, syntax coloring, and real-time verification should work out of the box.
-* Verification happens as you type, and its status is shows in the mode line (`FlyC*`: busy; `FlyC:a/b`: done).
+* Verification happens as you type, and its status is shows in the mode line (`FlyC*`: busy; `FlyC:a/b`: done with `a` errors and `b` warnings).
 
 #### Real-time error highlighting
 
@@ -174,6 +176,16 @@ For example, you can add the following to the top of a file:
 ```elisp
 // -*- dafny-prover-local-args: ("/vcsMaxKeepGoingSplits:5" "/proverMemoryLimit:250") -*-
 ```
+
+### Troubleshooting
+
+* If you're having issues with the Dafny server, try using the simpler CLI-based backend by adding the following to your `.emacs` and restarting (if you run into such issues, though, we'd love to hear about them):
+```elisp
+(setq dafny-prover-interface 'cli)
+```
+(note that you can also disable on-the-fly verification by replacing `'cli` with `nil`)
+
+* If the verification seems to be taking forever, `M-x inferior-dafny-reset` may help.
 
 ### Acknowledgments
 

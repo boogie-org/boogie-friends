@@ -86,6 +86,24 @@
   "Name of file holding Dafny attributes."
   :group 'dafny)
 
+(defcustom dafny-prover-interface 'cli
+  "Which interface to use for on-the-fly verification.
+
+One of `cli', `server', or nil.
+
+* `cli' uses the standard Dafny binary (found at
+  `flycheck-dafny-executable'), which does not suport caching.
+
+* `server' uses a background Dafny server process (found at
+  `flycheck-inferior-dafny-executable') and supports caching.
+
+* nil disables on-the-fly verification."
+  :tag "Prover interface"
+  :type '(radio (const :tag "CLI (slow, stable)" cli)
+                (const :tag "Server (fast, experimental)" server)
+                (const :tag "None" nil))
+  :group 'dafny)
+
 (defcustom dafny-prover-args '("/compile:0" "/nologo")
   "Arguments to pass to Dafny when checking a file.
 The name of the file itself is added last.  You can override all
@@ -432,6 +450,10 @@ open Dafny buffers."
   (backward-char 1)
   (call-interactively #'dafny-attributes-backend))
 
+(defun dafny-predicate ()
+  (or (eq dafny-prover-interface 'cli)
+      boogie-friends--prover-running-in-foreground-p))
+
 (flycheck-def-executable-var dafny "dafny")
 
 (flycheck-define-command-checker 'dafny
@@ -439,6 +461,7 @@ open Dafny buffers."
   :command '("dafny" (eval (boogie-friends-compute-prover-args)) source-inplace)
   :error-patterns boogie-friends-error-patterns
   :error-filter #'flycheck-increment-error-columns
+  :predicate #'dafny-predicate
   :modes '(dafny-mode))
 
 (add-to-list 'flycheck-checkers 'dafny)
