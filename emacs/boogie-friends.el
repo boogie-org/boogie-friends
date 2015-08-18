@@ -115,7 +115,7 @@
                ,boogie-friends-message-pattern)))
   "Error patterns for the Dafny and Boogie checkers.")
 
-(defcustom boogie-friends-profiler-timeout 30
+(defcustom boogie-friends-profiler-timeout 60
   "Timeout used when profiling.
 This value is read by `boogie-friends-profile', which see.  It
 must an whole number of seconds.")
@@ -427,6 +427,11 @@ If SET-POINT, place the point where EVENT points to."
      (when ,set-point
        (mouse-set-point ,event))))
 
+(defun boogie-friends-fill-paragraph (&optional justify)
+  "Like `fill-paragraph`, but only handles comments."
+  (fill-comment-paragraph justify)
+  t)
+
 (defun boogie-friends-backward-line ()
   "Jump one line backwards, and then skip over blank lines."
   (forward-line 0)
@@ -614,8 +619,8 @@ Loads symbols from `boogie-friends-symbols-alist'."
 Uses `boogie-friends-mode-name' as the name of the checker."
   (flycheck-mode)
   (define-key flycheck-command-map "q" #'flycheck-stop)
-  (set (make-local-variable 'flycheck-navigation-minimum-level) 'info)
-  (set (make-local-variable 'flycheck-error-list-minimum-level) 'info)
+  (set (make-local-variable 'flycheck-navigation-minimum-level) 'warning)
+  (set (make-local-variable 'flycheck-error-list-minimum-level) 'warning)
   (set (make-local-variable 'flycheck-display-errors-function) #'boogie-friends-display-first-lines)
   (let ((executable (flycheck-checker-executable (intern (boogie-friends-mode-name)))))
     (unless (executable-find executable)
@@ -623,12 +628,14 @@ Uses `boogie-friends-mode-name' as the name of the checker."
                (capitalize (boogie-friends-mode-name)) executable (boogie-friends-mode-name)))))
 
 (defun boogie-friends-mode-setup (&optional minimal)
-  "Setup the current buffer for Boogie-related editing."
+  "Setup the current buffer for Boogie-related editing.
+If MINIMAL is non-nil, only setup minor modes."
   (unless minimal
     (set (make-local-variable 'tab-width) 2)
     (set (make-local-variable 'font-lock-defaults) (list (boogie-friends-mode-var 'font-lock-keywords)))
     (set (make-local-variable 'comment-start) "//")
-    (set (make-local-variable 'comment-start-skip) "/[*/]\\s-+")
+    (set (make-local-variable 'comment-start-skip) "/[*/]+\\s-*")
+    (set (make-local-variable 'fill-paragraph-function) #'boogie-friends-fill-paragraph)
     (make-local-variable 'company-transformers)
     (add-to-list 'company-transformers #'boogie-friends-sort-completion-candidates)
     (add-to-list (make-local-variable 'company-backends) boogie-friends-ordered-backends)

@@ -81,8 +81,8 @@
 ;;   list of errors.
 ;;
 ;; The client-server protocol is sequential, uses JSON, and works over ASCII
-;; pipes by base64-encoding queries. It defines one type of query, and two types
-;; of responses:
+;; pipes by base64-encoding utf-8 queries. It defines one type of query, and two
+;; types of responses:
 ;;
 ;; Queries are of the following form:
 ;;    verify
@@ -117,7 +117,9 @@
 
 ;;; Customization
 
-(defvar dafny-verification-backend) ;; forward declaration (see dafny-mode.el)
+;; forward declarations (see dafny-mode.el)
+(defvar dafny--flycheck-extra)
+(defvar dafny-verification-backend)
 
 (flycheck-def-executable-var inferior-dafny "dafny-server.exe")
 
@@ -138,6 +140,8 @@ location, and the server is directed to that location.")
 
 The transcript file is saved under the name specified in variable
 `inferior-dafny--transcript-name'.")
+
+;; FIXME: Menu?
 
 ;;; Debugging functions
 
@@ -171,6 +175,10 @@ The transcript file is saved under the name specified in variable
           (regexp-quote inferior-dafny-server-eom-tag))
   "Regexp matching the end tag of both prover end tags.")
 
+(defconst inferior-dafny-status-regexp
+  "\\`\\(CheckWellFormed\\|Impl\\)\\$\\$.+\\.\\([^.]+\\)\\.\\([^.]+\\)\\'"
+  "Regexp to clean up Boogie method names.")
+
 (defconst inferior-dafny-process-name-template
   " *inferior-dafny--%s*"
   "Format string to name the Dafny server process.")
@@ -196,6 +204,7 @@ The transcript file is saved under the name specified in variable
   "The Dafny server inferior process.")
 (defvar-local inferior-dafny--callback nil
   "A function to call after verification completes.")
+
 (defconst inferior-dafny--parent-buffer 'inferior-dafny--parent-buffer
   "Key to put parent buffer under in the server process' plist.")
 
@@ -221,6 +230,7 @@ corresponding output buffer is created or recycled."
          (proc      (start-process proc-name proc-buf
                                    flycheck-inferior-dafny-executable)))
     (set-process-query-on-exit-flag proc nil)
+    (set-process-coding-system proc 'utf-8 'utf-8)
     (set-process-filter proc #'inferior-dafny-filter)
     (set-process-sentinel proc #'inferior-dafny-sentinel)
     (process-put proc inferior-dafny--parent-buffer (current-buffer))
@@ -245,13 +255,13 @@ corresponding output buffer is created or recycled."
   "Save a snapshot of the buffer and return its path in a plist."
   (let ((temp-fname (flycheck-save-buffer-to-temp
                      #'flycheck-temp-file-inplace)))
-    `(:source ,temp-fname :sourceIsFile t)))
+    `(:source ,(encode-coding-string temp-fname 'utf-8) :sourceIsFile t)))
 
 (defun inferior-dafny-get-source-as-string ()
   "Make a snapshot of the buffer and return it in a plist."
   (save-restriction
     (widen)
-    `(:source ,(buffer-string) :sourceIsFile nil)))
+    `(:source ,(encode-coding-string (buffer-string) 'utf-8) :sourceIsFile nil)))
 
 (defun inferior-dafny-get-source ()
   "Prepare the :source and :sourceIsFile part of a query."
@@ -307,7 +317,8 @@ If `inferior-dafny--busy' is non-nil, complain loudly."
   (unless (inferior-dafny-live-p)
     (inferior-dafny-init))
   (setq inferior-dafny--busy (current-time)
-        inferior-dafny--callback callback)
+        inferior-dafny--callback callback
+        dafny--flycheck-extra nil)
   (when inferior-dafny--write-snapshots
     (inferior-dafny-write-snapshot))
   (inferior-dafny-update-transcript)
@@ -351,6 +362,7 @@ Insert STRING in the output buffer, and look for
   (with-current-buffer (process-buffer proc)
     (goto-char (point-max))
     (insert string)
+    (inferior-dafny-update-status (process-mark proc) (point))
     (set-marker (process-mark proc) (point))
     (forward-line 0) ;; end tag is always on its own line
     (-when-let* ((final-status (inferior-dafny-find-eom-tag))
@@ -397,6 +409,29 @@ verification was initiated."
            (inferior-dafny-callback
             'errored  response)))))
 
+(defun inferior-dafny-update-status (beg end)
+  "Look for and display a status message.
+
+The status message in searched for in the region that spans from
+the beginning of the line on which BEG is found to END."
+  (save-excursion
+    (setq dafny--flycheck-extra nil)
+    (let ((bound (progn (goto-char beg)
+                        (beginning-of-line)
+                        (point))))
+      (goto-char end)
+      (when (and (boundp 'boogie-friends-trace-header-regexp)
+                 (re-search-backward boogie-friends-trace-header-regexp bound t))
+        (-when-let* ((name    (match-string-no-properties 1))
+                     (clean   (replace-regexp-in-string
+                               inferior-dafny-status-regexp "\\3" name))
+                     (wrapped (format "[%s]" clean)))
+          (setq dafny--flycheck-extra wrapped)))
+      (when (string-match-p "Impl" (or dafny--flycheck-extra ""))
+        (message "Strange [%s] from [%s]" dafny--flycheck-extra (buffer-substring-no-properties bound end)))))
+  (inferior-dafny-with-parent-buffer (current-buffer)
+    (force-mode-line-update)))
+
 (defun inferior-dafny-reset-file-names (errors)
   "Adjust file names in ERRORS.
 
@@ -426,12 +461,13 @@ preparation for the next verification."
   (let ((callback inferior-dafny--callback)
         (was-busy inferior-dafny--busy))
     (setq inferior-dafny--busy nil
-          inferior-dafny--callback nil)
+          inferior-dafny--callback nil
+          dafny--flycheck-extra nil)
     (unless (eq (null was-busy) (null callback))
       (error "Got unexpected status: [%s] [%s]" was-busy callback))
     (when (and was-busy callback)
-      (inferior-dafny-info "Verification took %.2fs"
-                           (float-time (time-since was-busy)))
+      (inferior-dafny-debug "Verification took %.2fs"
+                            (float-time (time-since was-busy)))
       ;; Careful: The callback may launch another verification.
       ;; We don't want to prevent it, so --busy and --callback must be nil here
       (funcall callback status data))))
@@ -474,8 +510,9 @@ If KILL-BUFFER is non-nil, get rid of its output buffer as well."
   (when inferior-dafny--callback
     (inferior-dafny-callback 'errored "Killed"))
   (setq inferior-dafny--busy nil
+        inferior-dafny--callback nil
         inferior-dafny--process nil
-        inferior-dafny--callback))
+        dafny--flycheck-extra nil))
 
 (defun inferior-dafny-parent-buffer-killed ()
   "Value for `kill-buffer-hook' in the source buffer."
