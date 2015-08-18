@@ -63,6 +63,12 @@ few extra flags in addition to the default ones."
 These come in addition to `z3-smt2-prover-args'."
   :group 'z3)
 
+(defcustom z3-smt2-prover-background-args '()
+  "Extra arguments to pass to Z3 for background verification.
+These come in addition to `z3-smt2-prover-args' and
+`z3-smt2-prover-custom-args'."
+  :group 'z3)
+
 (defcustom z3-smt2-prover-local-args '()
   "Extra arguments to pass to Z3 when checking a file.
 These come in addition to `z3-smt2-prover-args' and
