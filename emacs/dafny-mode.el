@@ -186,7 +186,7 @@ the return value."
    (cons "!\\_<in\\_>" font-lock-keyword-face) ;; Needed because '!' is not part of a symbol, so adding '!in' to keywords doesn't work
    (cons dafny-keywords-regexp font-lock-keyword-face)
    (cons dafny-types-regexp font-lock-type-face)
-   (list "\\(!\\)\\([^=i]\\|$\\)" 1 font-lock-negation-char-face)
+   (list "\\(!\\)\\([^=i!]\\|$\\)" 1 font-lock-negation-char-face)
    (list "\\(\\_<forall\\_>\\).*::"
          '(1 (compose-region (match-beginning 1) (match-end 1) ?∀))
          '(1 font-lock-keyword-face append)))
@@ -473,15 +473,24 @@ open Dafny buffers."
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.dfy\\'" . dafny-mode))
 
+(defvar dafny--flycheck-extra nil
+  "Extra text to append to Flycheck's status.")
+
+(defun dafny-mode-flycheck-mode-line ()
+  "Construct a string to replace the default Flycheck modeline."
+  (concat (flycheck-mode-line-status-text)
+          (or dafny--flycheck-extra "")))
+
 ;;;###autoload
 (define-derived-mode dafny-mode prog-mode "Dafny"
   "Major mode for editing Dafny programs.
 
 \\{dafny-mode-map}"
   :syntax-table dafny-mode-syntax-table
-  (add-to-list 'boogie-friends-symbols-alist '("in" . ?∈))
-  (add-to-list 'boogie-friends-symbols-alist '("!in" . ?∉))
+  (setq-local boogie-friends-symbols-alist (append '(("in" . ?∈) ("!in" . ?∉) ("!!" . ?‼))
+                                                   boogie-friends-symbols-alist))
   (boogie-friends-mode-setup)
+  (set (make-local-variable 'flycheck-mode-line) '(:eval (dafny-mode-flycheck-mode-line)))
   (set (make-local-variable 'indent-line-function) #'dafny-indent-keep-position)
   (set (make-local-variable 'indent-region-function) nil)
   (add-to-list (make-local-variable 'font-lock-extra-managed-props) 'composition)

@@ -136,8 +136,13 @@ If non-nil, background args will be ommitted from prover invocations.")
 Use this hook to alter settings common to Dafny and Boogie, such
 as prettification.")
 
+(defconst boogie-friends-trace-header-regexp
+  "^Verifying\\s-*\\([^ ]+\\)\\s-*\\.\\.\\."
+  "Header part of `boogie-friends-trace-entry-regexp'.")
+
 (defconst boogie-friends-trace-entry-regexp
-  "^Verifying\\s-*\\([^ ]+\\)\\s-*...\\s-*\\[\\(\\([^ ]+\\)\\s-+s\\),.*\\]"
+  (concat boogie-friends-trace-header-regexp
+          "\\s-*\\[\\(\\([^ ]+\\)\\s-+s\\),.*\\]")
   "Regexp used to locate useful timings from a Boogie trace.")
 
 (defconst boogie-friends-trace-entry-spec
@@ -145,7 +150,7 @@ as prettification.")
   "Font-lock keyword spec to highlight `boogie-friends-trace-entry-regexp'.")
 
 (defconst boogie-friends-font-lock-var "\\_<\\(\\sw\\(?:\\sw\\|\\s_\\)*\\)\\_>"
-  "Regexp used to detect variable names")
+  "Regexp used to detect variable names.")
 
 (defconst boogie-friends-font-lock-type "\\_<\\(\\sw+\\(?:<\\sw\\(?:\\sw\\|\\s_\\|[< ,>]\\)*>\\)?\\)\\_>"
   "Regexp used to detect type names.
@@ -338,7 +343,7 @@ Throws if a counter-example is found."
 Used by `boogie-friends-trace', which see. If NO-TIMEOUT is
 non-nil, each method is restricted to
 `boogie-friends-profiler-timeout' seconds."
-  (append (list "/z3opt:TRACE=true")
+  (append (list "/z3opt:TRACE=true" "/trace")
           (when log-path (list (format "/z3opt:TRACE_FILE_NAME=\"%s\"" log-path)))
           (when (stringp proc) (list (format "/proc:%s" proc)))
           (boogie-friends-get-timeout-arg)))
@@ -397,8 +402,8 @@ non-nil, each method is restricted to
 (defun boogie-friends-profile (func &optional use-alternate)
   "Profile a given function FUNC, or the whole file is FUNC is nil.
 After invoking the relevant profiling command, call a
-mode-specific function to handle the profile trace. When
-USE-ALTERNATE is non-nil, use alternate prover args. For each
+mode-specific function to handle the profile trace.  When
+USE-ALTERNATE is non-nil, use alternate prover args.  For each
 method profiling stops after `boogie-friends-profiler-timeout'
 seconds."
   (interactive (boogie-friends-profiler-interact))
