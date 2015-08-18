@@ -412,10 +412,10 @@ the value of variable `buffer-file-name'."
 
 (defun inferior-dafny-parse-errors (response)
   "Parse RESPONSE, extracting error messages."
-  (inferior-dafny-reset-file-names
-   ;; FIXME this won't be needed once Boggie returns the right tokens
-   (flycheck-increment-error-columns
-    (flycheck-parse-with-patterns response 'dafny (current-buffer)))))
+  (boogie-friends-cleanup-errors
+   (inferior-dafny-reset-file-names
+    (flycheck-increment-error-columns
+     (flycheck-parse-with-patterns response 'dafny (current-buffer))))))
 
 (defun inferior-dafny-callback (status &optional data)
   "Forward STATUS and DATA to the currently registered callback.
