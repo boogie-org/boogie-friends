@@ -463,8 +463,10 @@ If REV is non-nil, cycle in the opposite order."
             (replace-regexp-in-string
              "\\`[ \t\r\n]+" ""
              (replace-regexp-in-string
-              "\\([\r\n]\\) " "\\1"
-              msg)))))
+              "[ \t\r\n]+\\'" ""
+              (replace-regexp-in-string
+               "\\([\r\n]\\) " "\\1"
+               msg))))))
   errs)
 
 (defun boogie-friends-parse-trace-entry ()
@@ -619,9 +621,9 @@ Loads symbols from `boogie-friends-symbols-alist'."
 Uses `boogie-friends-mode-name' as the name of the checker."
   (flycheck-mode)
   (define-key flycheck-command-map "q" #'flycheck-stop)
-  (set (make-local-variable 'flycheck-navigation-minimum-level) 'warning)
-  (set (make-local-variable 'flycheck-error-list-minimum-level) 'warning)
-  (set (make-local-variable 'flycheck-display-errors-function) #'boogie-friends-display-first-lines)
+  (setq flycheck-error-list-minimum-level 'info
+        flycheck-navigation-minimum-level 'info)
+  (set (make-local-variable 'flycheck-display-errors-function) #'boogie-friends-display-first-lines) ;;FIXME
   (let ((executable (flycheck-checker-executable (intern (boogie-friends-mode-name)))))
     (unless (executable-find executable)
       (message "Could not start checker for %s: '%s' not found. Please fix `flycheck-%s-executable'."

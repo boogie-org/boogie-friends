@@ -426,9 +426,7 @@ the beginning of the line on which BEG is found to END."
                      (clean   (replace-regexp-in-string
                                inferior-dafny-status-regexp "\\3" name))
                      (wrapped (format "[%s]" clean)))
-          (setq dafny--flycheck-extra wrapped)))
-      (when (string-match-p "Impl" (or dafny--flycheck-extra ""))
-        (message "Strange [%s] from [%s]" dafny--flycheck-extra (buffer-substring-no-properties bound end)))))
+          (setq dafny--flycheck-extra wrapped)))))
   (inferior-dafny-with-parent-buffer (current-buffer)
     (force-mode-line-update)))
 
