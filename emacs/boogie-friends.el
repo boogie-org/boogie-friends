@@ -465,7 +465,7 @@ If REV is non-nil, cycle in the opposite order."
              (replace-regexp-in-string
               "[ \t\r\n]+\\'" ""
               (replace-regexp-in-string
-               "\\([\r\n]\\) " "\\1"
+               "\\(\r\n\\|\r\\|\n\\) " "\n"
                msg))))))
   errs)
 
