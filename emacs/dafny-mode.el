@@ -187,7 +187,7 @@ the return value."
    (cons dafny-keywords-regexp font-lock-keyword-face)
    (cons dafny-types-regexp font-lock-type-face)
    (list "\\(!\\)\\([^=i!]\\|$\\)" 1 font-lock-negation-char-face)
-   (list "\\(\\_<forall\\_>\\).*::"
+   (list "\\(\\_<forall\\_>\\).*?::"
          '(1 (compose-region (match-beginning 1) (match-end 1) ?∀))
          '(1 font-lock-keyword-face append)))
   "Font lock specifications for `dafny-mode'.")
@@ -277,10 +277,9 @@ Useful to ignore mouse-up events handled mouse-down events."
            ((or is-close is-lonely-open)
             (save-excursion
               (when is-close
-                (up-list)
-                (backward-sexp))
+                (backward-up-list))
               ;; Find beginning of block head (the head can span multiple lines)
-              (let ((bound (save-excursion (re-search-backward "[{}]" nil t))))
+              (let ((bound (save-excursion (ignore-errors (backward-up-list) (point)))))
                 ;; The bound ensures that brackets headerless blocks are indented properly
                 (re-search-backward (concat "^\\s-*}?" dafny-extended-block-head-regexp) bound t))
               (current-indentation)))
