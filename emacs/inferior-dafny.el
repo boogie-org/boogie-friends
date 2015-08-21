@@ -482,13 +482,18 @@ preparation for the next verification."
 ;;; Termination
 
 (defun inferior-dafny-reset ()
-  "Kill the server the output buffer, and reset flycheck.
+  "Kill all servers and their output buffers, and reset flycheck.
 
 Mostly useful for debugging, or when the client seems to be
 confused about the prover's state."
   (interactive)
-  (inferior-dafny-kill t)
-  (flycheck-teardown))
+  (cl-loop for b being the buffers
+           do (when (and (buffer-live-p b)
+                         (eq (buffer-local-value 'major-mode b)
+                             'dafny-mode))
+                (with-current-buffer b
+                  (inferior-dafny-kill t)
+                  (flycheck-teardown)))))
 
 (defun inferior-dafny-kill (&optional kill-buffer)
   "Kill the server.
