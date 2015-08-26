@@ -465,8 +465,10 @@ If REV is non-nil, cycle in the opposite order."
              (replace-regexp-in-string
               "[ \t\r\n]+\\'" ""
               (replace-regexp-in-string
-               "\\(\r\n\\|\r\\|\n\\) " "\n"
-               msg))))))
+               "\\(\r\n\\|\r\\)" "\n"
+               (replace-regexp-in-string
+                "\\(\r\n\\|\r\\|\n\\) " "\n"
+                msg)))))))
   errs)
 
 (defun boogie-friends-parse-trace-entry ()
