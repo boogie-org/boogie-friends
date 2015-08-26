@@ -1,6 +1,6 @@
-no_inline
+autotriggers ${true|false}
 
-no_trigger
+split ${true|false}
 
 induction ${$variables|false}
 

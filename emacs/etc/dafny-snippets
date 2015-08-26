@@ -5,7 +5,7 @@ var ${$name} := ${$value};
 var ${$name}: ${$type} := ${$value};
 
 method ${1:$name<T>}(${2:$params}) ${3:returns (${4:$vars}) }{
-  ${5:$body}
+  $0
 }
 
 method ${1:$name<T>}(${2:$params}) ${3:returns (${4:$vars})}${5:
@@ -14,11 +14,11 @@ method ${1:$name<T>}(${2:$params}) ${3:returns (${4:$vars})}${5:
   ensures ${10:$post-condition}}${11:
   decreases ${12:$rank}}
 {
-  ${13:$body}
+  $0
 }
 
 constructor ${1:$name<T>}(${2:$params}) {
-  ${3:$body}
+  $0
 }
 
 constructor ${1:$name<T>}(${2:$params}) ${3:
@@ -27,11 +27,11 @@ constructor ${1:$name<T>}(${2:$params}) ${3:
   ensures ${8:$post-condition}}${9:
   decreases ${10:$rank}}
 {
-  ${11:$body}
+  $0
 }
 
 function ${1:$name<T>}(${2:$params}): ${3:$return-type }{
-  ${4:$body}
+  $0
 }
 
 function ${1:$name<T>}(${2:$params}): ${3:$return-type}${4:
@@ -40,7 +40,7 @@ function ${1:$name<T>}(${2:$params}): ${3:$return-type}${4:
   ensures ${9:$post-condition}}${10:
   decreases ${11:$rank}}
 {
-  ${12:$body}
+  $0
 }
 
 function method ${1:$name<T>}(${2:$params}): ${3:$return-type}${4:
@@ -49,11 +49,11 @@ function method ${1:$name<T>}(${2:$params}): ${3:$return-type}${4:
   ensures ${9:$post-condition}}${10:
   decreases ${11:$rank}}
 {
-  ${12:$body}
+  $0
 }
 
 predicate ${1:$name<T>}(${2:$params}) {
-  ${4:$body}
+  $0
 }
 
 predicate ${1:$name<T>}(${2:$params})${4:
@@ -62,11 +62,11 @@ predicate ${1:$name<T>}(${2:$params})${4:
   ensures ${9:$post-condition}}${10:
   decreases ${11:$rank}}
 {
-  ${12:$body}
+  $0
 }
 
 class ${$name<T>} {
-  ${$class-body}
+  $0
 }
 
 datatype ${$name<T>} = ${$constructors}
@@ -76,7 +76,7 @@ assert ${$expr};
 print ${$expr};
 
 if ${$condition} {
-   ${$body}
+   $0
 }
 
 if ${$condition} {
@@ -88,7 +88,7 @@ if ${$condition} {
 if ${$condition} then ${$true-body} else ${$false-body}
 
 while ${1:$condition} {
-  ${2:$body}
+  $0
 }
 
 while ${1:$condition}${2:
@@ -96,7 +96,7 @@ while ${1:$condition}${2:
   modified ${5:$frame}}${6:
   decreases ${7:$rank}}
 {
-  ${8:$body}
+  $0
 }
 
 match ${1:$expr} {
