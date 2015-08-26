@@ -96,7 +96,8 @@
 ;;    <error message>
 ;;    [FAILURE] [[DAFNY-SERVER: EOM]]
 ;;
-;; The JSON payload is an array with 4 fields:
+;; The JSON payload is an utf-8 encoded string resulting of the serialization of
+;; a dictionary with 4 fields:
 ;;    * args:   An array of Dafny arguments, as passed to the Dafny CLI
 ;;    * source: A Dafny program, or the path to a Dafny source file.
 ;;    * sourceIsFile: A boolean indicating whether the 'source' argument is a
@@ -255,13 +256,13 @@ corresponding output buffer is created or recycled."
   "Save a snapshot of the buffer and return its path in a plist."
   (let ((temp-fname (flycheck-save-buffer-to-temp
                      #'flycheck-temp-file-inplace)))
-    `(:source ,(encode-coding-string temp-fname 'utf-8) :sourceIsFile t)))
+    `(:source ,temp-fname :sourceIsFile t)))
 
 (defun inferior-dafny-get-source-as-string ()
   "Make a snapshot of the buffer and return it in a plist."
   (save-restriction
     (widen)
-    `(:source ,(encode-coding-string (buffer-string) 'utf-8) :sourceIsFile nil)))
+    `(:source ,(buffer-string) :sourceIsFile nil)))
 
 (defun inferior-dafny-get-source ()
   "Prepare the :source and :sourceIsFile part of a query."
@@ -282,7 +283,8 @@ when post-processing errors.")
          (fname (or buffer-file-name inferior-dafny-fname-placeholder))
          (src   (inferior-dafny-get-source))
          (json  (json-encode `(:args ,args :filename ,fname ,@src)))
-         (b64   (concat (base64-encode-string json)))
+         (json8 (encode-coding-string json 'utf-8 t))
+         (b64   (concat (base64-encode-string json8)))
          (cmd   (format "%s\n%s\n%s\n" "verify" b64
                         inferior-dafny-client-eom-tag)))
     (inferior-dafny-debug "Sending [%s] [%s]" b64 cmd)
