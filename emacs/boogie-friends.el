@@ -95,7 +95,7 @@
 
 (defconst boogie-friends-message-pattern
   '(message (* nonl)
-            (? (+ (or "\n" "\r")) "Execution trace:") ;; FIXME we don't really want to catch error traces, but otherwise we would miss "Related location" messages
+            ;; (? (+ (or "\n" "\r")) "Execution trace:") ;; We don't really want to catch error traces
             (* (+ (or "\n" "\r")) " " (+ nonl)))
   "See `boogie-friends-error-patterns'.")
 
@@ -458,17 +458,18 @@ If REV is non-nil, cycle in the opposite order."
   ;; Remove indentation that was added only to make it easier to parse
   ;; multiline error messages, and cleanup leading spaces
   (dolist (err errs)
-    (-when-let (msg (flycheck-error-message err))
+    (let* ((msg (flycheck-error-message err))
+           (clean (and msg (replace-regexp-in-string ;; Remove spurious indentation
+                            "\n " "\n"
+                            (replace-regexp-in-string ;; Space at end
+                             "[ \t\n]+\\'" ""
+                             (replace-regexp-in-string ;; Space at beginning
+                              "\\`[ \t\n]+" ""
+                              (replace-regexp-in-string ;; Normalize line endings
+                               "\\(\r\n\\|\r\\)" "\n"
+                               msg)))))))
       (setf (flycheck-error-message err)
-            (replace-regexp-in-string
-             "\\`[ \t\r\n]+" ""
-             (replace-regexp-in-string
-              "[ \t\r\n]+\\'" ""
-              (replace-regexp-in-string
-               "\\(\r\n\\|\r\\)" "\n"
-               (replace-regexp-in-string
-                "\\(\r\n\\|\r\\|\n\\) " "\n"
-                msg)))))))
+            (if (string= (or clean "") "") "Related location" clean))))
   errs)
 
 (defun boogie-friends-parse-trace-entry ()
