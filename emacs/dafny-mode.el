@@ -136,7 +136,10 @@ and `dafny-prover-custom-args' when manually launching
 verification (\\[boogie-friends-verify]) with a prefix arg."
   :group 'dafny)
 
-(defconst dafny-snippets nil
+(defvar dafny-snippets nil
+  "Cache of all known Dafny snippets, loaded from `dafny-snippets-repo'.")
+
+(defvar dafny-attributes nil
   "Cache of all known Dafny snippets, loaded from `dafny-snippets-repo'.")
 
 (defun dafny-load-snippets-collection (repo place force-reload interactive)
@@ -390,23 +393,34 @@ open Dafny buffers."
             (recenter))))
       (current-buffer))))
 
-(defun dafny-file-exists-or-error (fname &optional if-nil if-missing)
+(defun dafny-file-exists-or-error (fname &optional if-nil if-missing no-exists-error)
   "Return FNAME, unless it does not exist as a file."
   (if fname
-      (if (file-exists-p fname)
+      (if (or no-exists-error (file-exists-p fname))
           fname
         (error "%s" (or if-missing (format "Not found: %s" fname))))
     (error "%s" (or if-nil "No file found"))))
 
-;;;###autoload
-(defun dafny-test-suite-open-diff (dfy-name)
-  (interactive (list (progn (require 'ffap) (with-no-warnings (ffap-file-at-point)))))
+(defun dafny-test-suite-paths (dfy-name &optional no-err-for-expect)
   (-when-let* ((dfy    (dafny-file-exists-or-error dfy-name "No file at point"))
-               (expect (dafny-file-exists-or-error (concat dfy-name ".expect")))
+               (expect (dafny-file-exists-or-error (concat dfy-name ".expect") nil nil no-err-for-expect))
                (output (dafny-file-exists-or-error
                         (expand-file-name (concat (file-name-nondirectory dfy-name) ".tmp")
                                           (expand-file-name "Output" (file-name-directory dfy-name))))))
+    (list dfy expect output)))
+
+;;;###autoload
+(defun dafny-test-suite-open-diff (dfy-name)
+  (interactive (list (progn (require 'ffap) (with-no-warnings (ffap-file-at-point)))))
+  (-when-let* (((dfy expect output) (dafny-test-suite-paths dfy-name)))
     (diff expect output)))
+
+;;;###autoload
+(defun dafny-test-suite-accept-diff (dfy-name)
+  (interactive (list (progn (require 'ffap) (with-no-warnings (ffap-file-at-point)))))
+  (-when-let* (((dfy expect output) (dafny-test-suite-paths dfy-name t)))
+    (copy-file output expect t)
+    (message "%s accepted" output)))
 
 (defun dafny-verify-false ()
   (interactive)
@@ -489,6 +503,7 @@ open Dafny buffers."
   (setq-local boogie-friends-symbols-alist (append '(("in" . ?∈) ("!in" . ?∉) ("!!" . ?‼))
                                                    boogie-friends-symbols-alist))
   (boogie-friends-mode-setup)
+  (add-to-list 'company-backends #'dafny-attributes-backend)
   (set (make-local-variable 'flycheck-mode-line) '(:eval (dafny-mode-flycheck-mode-line)))
   (set (make-local-variable 'indent-line-function) #'dafny-indent-keep-position)
   (set (make-local-variable 'indent-region-function) nil)
