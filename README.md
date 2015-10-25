@@ -2,7 +2,7 @@
 
 A collection of tools for interacting with Boogie and related languages.
 
-## Emacs package (`boogie-mode`, `dafny-mode`)
+## Emacs package (`boogie-mode`, `dafny-mode`, `z3-smt2-mode`)
 
 The `boogie-friends` package is an experimental collection of Emacs modes for
 writing verified programs in languages of the Boogie family. Dafny and Boogie
@@ -73,6 +73,7 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
     ```elisp
     (setq flycheck-dafny-executable "PATH-TO-Dafny.exe")
     (setq flycheck-boogie-executable "PATH-TO-BOOGIE")
+    (setq flycheck-z3-smt2-executable "PATH-TO-Z3")
     (setq boogie-friends-profile-analyzer-executable "PATH-TO-Z3-AXIOM-PROFILER") ;; Optional
     ```
 
