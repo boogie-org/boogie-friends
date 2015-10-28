@@ -134,7 +134,7 @@ with a prefix arg."
                   'lisp-font-lock-syntactic-face-function font-lock-defaults))
   (font-lock-add-keywords nil z3-smt2-font-lock-keywords)
 
-  ;; FIXME find a way to linit Z3 error count (typing [| generates lots of errors
+  ;; FIXME find a way to limit Z3 error count (typing [| generates lots of errors
   (set (make-local-variable 'flycheck-checker-error-threshold) nil)
   (boogie-friends-mode-setup t)
   (boogie-friends-setup-prettify))

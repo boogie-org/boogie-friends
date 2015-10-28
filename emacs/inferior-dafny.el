@@ -578,7 +578,6 @@ by T-MESSAGE or NIL-MESSAGE."
   (or (eq dafny-verification-backend 'server)
       (bound-and-true-p boogie-friends--prover-running-in-foreground-p)))
 
-;;;###autoload
 (flycheck-define-generic-checker 'dafny-server
   "A Dafny checker using a background caching server process."
   ;; FIXME interrupt could send C-c to the prover to
@@ -589,7 +588,6 @@ by T-MESSAGE or NIL-MESSAGE."
   :predicate #'inferior-dafny-predicate
   :modes '(dafny-mode))
 
-;;;###autoload
 (add-to-list 'flycheck-checkers 'dafny-server)
 
 (provide 'inferior-dafny)
