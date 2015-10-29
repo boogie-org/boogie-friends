@@ -495,9 +495,9 @@ form (FUNCTION-NAME . TIME)"
 If INCLUDE-PROFILING is non-nil, add keybindings for tracing and profiling."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "}") #'boogie-friends-self-insert-and-indent)
-    (define-key map (kbd "C-c C-p") #'boogie-friends-profile)
+    (define-key map (kbd "C-c C-c") #'boogie-friends-verify)
     (when include-profiling
-      (define-key map (kbd "C-c C-c") #'boogie-friends-verify)
+      (define-key map (kbd "C-c C-p") #'boogie-friends-profile)
       (define-key map (kbd "C-c C-t") #'boogie-friends-trace))
     (define-key map (kbd "<backtab>") #'boogie-friends-cycle-indentation)
     map))

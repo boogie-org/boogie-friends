@@ -90,7 +90,9 @@ with a prefix arg."
   "Font lock specifications for `z3-smt2-mode'.")
 
 (defvar z3-smt2-mode-map
-  (boogie-friends-make-keymap)
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-c") 'boogie-friends-verify)
+    map)
   "Keybindings for `z3-smt2-mode'.")
 
 (defvar z3-smt2-mode-syntax-table
