@@ -5,22 +5,24 @@ A collection of tools for interacting with Boogie and related languages.
 ## Emacs package (`boogie-mode`, `dafny-mode`, `z3-smt2-mode`)
 
 The `boogie-friends` package is an experimental collection of Emacs modes for
-writing verified programs in languages of the Boogie family. Dafny and Boogie
-are the two currently supported languages, and limited support for z3 SMT files
-is also included. Npotable features are listed below:
+writing verified programs in z3 and languages of the Boogie family (including Dafny).
+
+Notable features are listed below:
 
 * Syntax highlighting
-* Real-time compilation (using `flycheck`)
+* Real-time verification (using `flycheck`)
+
+In addition, the Dafny and Boogie modes offer:
+
 * Completion (using `company`)
 * Code folding (using `hideshow`)
 * Prettification (using `prettify-symbols-mode`)
 
-In addition, the Dafny mode offers:
+And the Dafny mode additionally also has:
 
 * (A few) Snippets (using `yasnippet`)
 * (Some) In-Emacs documentation
 * (Experimental) Navigation between Dafny and Boogie source files
-* (Some support for) indentation
 * (Some support for) jumping to a definition
 * (Experimental) support for using Dafny as a verification server. This means that Emacs spawns a server process, and uses Dafny's caching facilities to (massively) improve reactivity.
 
@@ -31,6 +33,10 @@ In addition, the Dafny mode offers:
 ![Dafny buffer in Emacs](emacs/pictures/dafny-overview.png)
 
 Notice the error highlighting, the symbol beautification (`forall` appears as `∀`), and the code folding on the last line!
+
+#### A Z3 buffer
+
+![Z3 buffer in Emacs](emacs/pictures/z3-overview.png)
 
 #### A Boogie buffer
 
