@@ -570,7 +570,7 @@ by T-MESSAGE or NIL-MESSAGE."
 ;;; Flycheck setup
 
 (defun inferior-dafny-interrupt (&rest _args)
-  "Call `inferior-dafny-fill', ignoring _ARGS."
+  "Call `inferior-dafny-kill', ignoring _ARGS."
   (inferior-dafny-kill))
 
 (defun inferior-dafny-predicate ()

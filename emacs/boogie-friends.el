@@ -625,7 +625,7 @@ Loads symbols from `boogie-friends-symbols-alist'."
   "Setup `flycheck-mode' in the current buffer.
 Uses `boogie-friends-mode-name' as the name of the checker."
   (flycheck-mode)
-  (define-key flycheck-command-map "q" #'flycheck-stop)
+  (define-key flycheck-command-map "q" (lambda () (interactive) (flycheck-clear 'interrupt)))
   (setq flycheck-error-list-minimum-level 'info
         flycheck-navigation-minimum-level 'info)
   (set (make-local-variable 'flycheck-display-errors-function) #'boogie-friends-display-first-lines) ;;FIXME
