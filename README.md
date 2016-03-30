@@ -154,6 +154,8 @@ Add the following piece of code to your `.emacs` and restart to try out the Dafn
 (setq dafny-verification-backend 'server)
 ```
 
+If you run into issues, `C-c ! v` (`flycheck-verify-setup`) should have debugging info.
+
 #### Profiling
 
 A typical profiling workflow proceeds as follows:
