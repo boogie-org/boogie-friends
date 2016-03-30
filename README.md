@@ -154,6 +154,8 @@ Add the following piece of code to your `.emacs` and restart to try out the Dafn
 (setq dafny-verification-backend 'server)
 ```
 
+If you are running Dafny under `mono`, you may need to customize `flycheck-inferior-dafny-executable` to point to a shell script that calls `mono DafnyServer.exe`. There is a similar shell script for running `Dafny.exe` provided in the distribution; copying this script and modifying it to call `DafnyServer.exe` instead should be sufficient. You can use `C-c ! v` to check whether the executable is found by `flycheck`.
+
 #### Profiling
 
 A typical profiling workflow proceeds as follows:
