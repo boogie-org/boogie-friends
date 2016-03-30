@@ -108,7 +108,7 @@ with a prefix arg."
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.smt2\\'" . z3-smt2-mode))
 
-(flycheck-def-executable-var z3-smt2 "z3")
+(boogie-friends-def-exec z3 "z3.exe" "z3")
 
 (defconst z3-smt2-error-patterns
   '((error bol "(error \"line " line " column " column ":" (message) "\")" eol)

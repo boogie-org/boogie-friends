@@ -1,7 +1,7 @@
 (define-package
   "boogie-friends"
   "0.1"
-  "Collection of programming modes for Boogie, Dafny, and Z3 (SMTLIB v2)."
+  "A collection of programming modes for Boogie, Dafny, and Z3 (SMTLIB v2)."
   '((cl-lib "0.5")
     (dash "2.10.0")
     (flycheck "0.23")

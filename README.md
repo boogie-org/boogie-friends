@@ -80,8 +80,11 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
     (setq flycheck-dafny-executable "PATH-TO-Dafny.exe")
     (setq flycheck-boogie-executable "PATH-TO-BOOGIE")
     (setq flycheck-z3-smt2-executable "PATH-TO-Z3")
+    (setq flycheck-inferior-dafny-executable "PATH-TO-DafnyServer.exe") ;; Optional
     (setq boogie-friends-profile-analyzer-executable "PATH-TO-Z3-AXIOM-PROFILER") ;; Optional
     ```
+
+    On GNU/Linux or MacOS, use the path to the `dafny` and `dafny-server` wrapper scripts for the first two.
 
 ### Keybindings
 
@@ -145,7 +148,7 @@ If you don't like the way one particular symbol is rendered, you can adjust the 
 
 #### Using the Dafny server
 
-Add the following piece of code to your `.emacs` and restart to try out the Dafny server:
+Add the following piece of code to your `.emacs` and restart to try out the Dafny server. Make sure you also set `flycheck-inferior-dafny-executable`.
 
 ```elisp
 (setq dafny-verification-backend 'server)

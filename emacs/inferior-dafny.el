@@ -122,7 +122,7 @@
 (defvar dafny--flycheck-extra)
 (defvar dafny-verification-backend)
 
-(flycheck-def-executable-var inferior-dafny "dafny-server.exe")
+(boogie-friends-def-exec inferior-dafny "DafnyServer.exe" "dafny-server")
 
 (defvar inferior-dafny--in-memory nil
   "If non-nil, pass the buffer contents as part of queries to the server.

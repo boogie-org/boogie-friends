@@ -1,8 +1,10 @@
-;;; boogie-friends.el --- Support for the Boogie-related languages in Emacs -*- lexical-binding: t -*-
+;;; boogie-friends.el --- A collection of programming modes for Boogie, Dafny, and Z3 (SMTLIB v2) -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Clément Pit--Claudel
 ;; Author: Clément Pit--Claudel <clement.pitclaudel@live.com>
 ;; URL: https://github.com/boogie-org/boogie-friends/
+;; Package-Depends: ((cl-lib "0.5") (company "0.8.12") (dash "2.10.0") (flycheck "0.23") (yasnippet "0.9.0.1"))
+;; Version: 0.1
 
 ;; Keywords: convenience, languages
 
@@ -631,6 +633,14 @@ Uses `boogie-friends-mode-name' as the name of the checker."
     (unless (executable-find executable)
       (message "Could not start checker for %s: '%s' not found. Please fix `flycheck-%s-executable'."
                (capitalize (boogie-friends-mode-name)) executable (boogie-friends-mode-name)))))
+
+(defmacro boogie-friends-def-exec (name-symbol windows-binary unix-binary)
+  "Define a Flycheck executable for NAME-SYMBOL.
+Use WINDOWS-BINARY on Windows, and UNIX-BINARY elsewhere."
+  `(flycheck-def-executable-var ,name-symbol
+     (if (memq system-type '(ms-dos windows-nt cygwin))
+         ,windows-binary
+       ,unix-binary)))
 
 (defun boogie-friends-mode-setup (&optional minimal)
   "Setup the current buffer for Boogie-related editing.

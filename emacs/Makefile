@@ -1,14 +1,27 @@
 EMACS ?= emacs
 SANDBOX ?= ./sandbox
+CASK = env --unset INSIDE_EMACS cask
 PACKAGE := $(shell $(EMACS) -Q --batch -l scripts/package-name.el -f my-package-version)
 
+all: depends elc
+
+.PHONY: elc clean-elc package-contents package clean-package sandboz clean-sandbox clean all
+
+depends:
+	$(CASK) install
+	$(CASK) update
+
 elc:
-	$(EMACS) -q -l package -f package-initialize \
-	         --eval "(add-to-list 'load-path \".\")" \
-	         --batch -f batch-byte-compile *.el
+	$(CASK) build
 
 clean-elc:
-	rm -rf *.elc
+	$(CASK) clean-elc
+
+version:
+	$(CASK) exec $(EMACS) --version
+
+pkg-file:
+	$(CASK) pkg-file
 
 dafny-docs.html: rebuild-dafny-docs.py
 	python3 ./scripts/rebuild-dafny-docs.py
@@ -28,11 +41,6 @@ sandbox: clean-sandbox package
 	$(EMACS) -Q --eval '(setq user-emacs-directory "$(SANDBOX)")' -l scripts/sandbox-setup.el \
 	            --eval '(package-install-file (expand-file-name (concat my-package-version ".tar") "build"))'
 
-melpa: clean-sandbox
-	mkdir -p $(SANDBOX)
-	$(EMACS) -Q --eval '(setq user-emacs-directory "$(SANDBOX)")' -l scripts/sandbox-setup.el \
-	            --eval "(package-install 'boogie-friends)"
-
 clean-sandbox:
 	rm -rf $(SANDBOX)
 
@@ -41,7 +49,3 @@ test: elc
 
 clean: clean-package clean-elc
 	rm -f dafny-docs.html
-
-all: elc dafny-docs package
-
-.PHONY: elc clean-elc package-contents package clean-package sandboz clean-sandbox clean all

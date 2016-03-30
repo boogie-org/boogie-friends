@@ -142,7 +142,7 @@ with a prefix arg."
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.bpl\\'" . boogie-mode))
 
-(flycheck-def-executable-var boogie "boogie")
+(boogie-friends-def-exec boogie "Boogie.exe" "boogie")
 
 (flycheck-define-command-checker 'boogie
   "Flycheck checker for the Boogie programming language."
