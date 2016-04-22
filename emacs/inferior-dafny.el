@@ -226,10 +226,14 @@ The transcript file is saved under the name specified in variable
 If the server is already running, kill it first.  The
 corresponding output buffer is created or recycled."
   (inferior-dafny-kill)
-  (let* ((proc-name (inferior-dafny-process-name))
-         (proc-buf  (inferior-dafny-make-process-buffer))
-         (proc      (start-process proc-name proc-buf
-                                   flycheck-inferior-dafny-executable)))
+  ;; Setting `process-connection-type' to nil ensures that we use a pipe instead
+  ;; of a TTY; TTYs leak the TERM variable, causing Mono to print syntax-highted
+  ;; error messages, which confuse our parser (also, TTYs are horribly slow).
+  (let* ((process-connection-type nil)
+         (proc-name (inferior-dafny-process-name))
+         (proc-buf (inferior-dafny-make-process-buffer))
+         (proc (start-process proc-name proc-buf
+			      flycheck-inferior-dafny-executable)))
     (set-process-query-on-exit-flag proc nil)
     (set-process-coding-system proc 'utf-8 'utf-8)
     (set-process-filter proc #'inferior-dafny-filter)
