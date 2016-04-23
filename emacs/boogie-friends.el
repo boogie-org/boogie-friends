@@ -175,15 +175,6 @@ greedily (the opening bracket is matched by \\s_).")
   (when (re-search-forward boogie-friends-font-lock-assignment-chain limit t)
     (goto-char (match-end 2))))
 
-(defun boogie-friends-format-header (err)
-  "Format the first line of a Flycheck error ERR."
-  (car (split-string (flycheck-error-message err) "\n")))
-
-(defun boogie-friends-display-first-lines (errs)
-  "Display first line of each error in ERRS."
-  (when (and errs (flycheck-may-use-echo-area-p))
-    (display-message-or-buffer (mapconcat #'boogie-friends-format-header errs "\n"))))
-
 (defun boogie-friends-clean-overlay (var &optional buffer)
   "Remove temporary overlay in VAR, in buffer BUFFER."
   (setq buffer (or buffer (current-buffer)))
@@ -628,7 +619,6 @@ Uses `boogie-friends-mode-name' as the name of the checker."
   (define-key flycheck-command-map "q" (lambda () (interactive) (flycheck-clear 'interrupt)))
   (setq flycheck-error-list-minimum-level 'info
         flycheck-navigation-minimum-level 'info)
-  (set (make-local-variable 'flycheck-display-errors-function) #'boogie-friends-display-first-lines) ;;FIXME
   (let ((executable (flycheck-checker-executable (intern (boogie-friends-mode-name)))))
     (unless (executable-find executable)
       (message "Could not start checker for %s: '%s' not found. Please fix `flycheck-%s-executable'."
