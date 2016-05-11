@@ -70,7 +70,7 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
     (package-initialize) ;; You might already have this line
     ```
 
-2. Install the package: `M-x package-install RET boogie-friends RET`
+2. Install the package: `M-x package-refresh-contents RET`, then `M-x package-install RET boogie-friends RET`
 
 3. Indicate the paths to your Dafny and Boogie installations:
 
