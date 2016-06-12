@@ -128,7 +128,7 @@ Only for temporary assignment of internal values")
 
 (defvar boogie-friends--prover-running-in-foreground-p nil
   "Bolean flag indicating whether the prover is being explicitly invoked.
-If non-nil, background args will be ommitted from prover invocations.")
+If non-nil, background args will be omitted from prover invocations.")
 
 (defvar boogie-friends-last-trace nil
   "Cache of the last trace information obtained for this buffer.")
