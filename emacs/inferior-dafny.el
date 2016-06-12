@@ -585,7 +585,7 @@ by T-MESSAGE or NIL-MESSAGE."
 (flycheck-define-generic-checker 'dafny-server
   "A Dafny checker using a background caching server process."
   ;; FIXME interrupt could send C-c to the prover to
-  ;; stop the current check without loosing the cache
+  ;; stop the current check without losing the cache
   :start #'inferior-dafny-verify
   :interrupt #'inferior-dafny-interrupt
   :verify #'inferior-dafny-healthcheck
