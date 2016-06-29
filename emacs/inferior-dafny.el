@@ -1,6 +1,6 @@
 ;;; inferior-dafny.el --- Using Dafny as a verification server -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Clément Pit--Claudel
+;; Copyright (C) 2015, 2016 Clément Pit--Claudel
 ;; Author: Clément Pit--Claudel <clement.pitclaudel@live.com>
 ;; URL: https://github.com/boogie-org/boogie-friends/
 
@@ -8,80 +8,51 @@
 
 ;; This file is not part of GNU Emacs.
 
-;; This license governs use of the accompanying software. If you use the
-;; software, you accept this license. If you do not accept the license, do not
-;; use the software.
+;; Permission is hereby granted, free of charge, to any person obtaining a copy
+;; of this software and associated documentation files (the "Software"), to deal
+;; in the Software without restriction, including without limitation the rights
+;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+;; copies of the Software, and to permit persons to whom the Software is
+;; furnished to do so, subject to the following conditions:
 
-;; 1. Definitions
-;; The terms "reproduce," "reproduction," "derivative works," and "distribution"
-;; have the same meaning here as under U.S. copyright law.
-;; A "contribution" is the original software, or any additions or changes to the
-;; software.
-;; A "contributor" is any person that distributes its contribution under this
-;; license.  "Licensed patents" are a contributor's patent claims that read
-;; directly on its contribution.
+;; The above copyright notice and this permission notice shall be included in all
+;; copies or substantial portions of the Software.
 
-;; 2. Grant of Rights
-;; (A) Copyright Grant- Subject to the terms of this license, including the
-;; license conditions and limitations in section 3, each contributor grants you
-;; a non-exclusive, worldwide, royalty-free copyright license to reproduce its
-;; contribution, prepare derivative works of its contribution, and distribute
-;; its contribution or any derivative works that you create.
-;; (B) Patent Grant- Subject to the terms of this license, including the license
-;; conditions and limitations in section 3, each contributor grants you a
-;; non-exclusive, worldwide, royalty-free license under its licensed patents to
-;; make, have made, use, sell, offer for sale, import, and/or otherwise dispose
-;; of its contribution in the software or derivative works of the contribution
-;; in the software.
-
-;; 3. Conditions and Limitations
-;; (A) No Trademark License- This license does not grant you rights to use any
-;; contributors' name, logo, or trademarks.
-;; (B) If you bring a patent claim against any contributor over patents that you
-;; claim are infringed by the software, your patent license from such
-;; contributor to the software ends automatically.
-;; (C) If you distribute any portion of the software, you must retain all
-;; copyright, patent, trademark, and attribution notices that are present in the
-;; software.
-;; (D) If you distribute any portion of the software in source code form, you
-;; may do so only under this license by including a complete copy of this
-;; license with your distribution. If you distribute any portion of the software
-;; in compiled or object code form, you may only do so under a license that
-;; complies with this license.
-;; (E) The software is licensed "as-is." You bear the risk of using it. The
-;; contributors give no express warranties, guarantees or conditions. You may
-;; have additional consumer rights under your local laws which this license
-;; cannot change. To the extent permitted under your local laws, the
-;; contributors exclude the implied warranties of merchantability, fitness for a
-;; particular purpose and non-infringement.
+;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;; SOFTWARE.
 
 ;;; Commentary:
 
 ;; See boogie-friends.el for general information about this package.
 ;;
 ;; This file offers of a more sophisticated method for verifying buffers on the
-;; fly than the original one. The checker defined in dafny-mode.el simply calls
+;; fly than the original one.  The checker defined in dafny-mode.el simply calls
 ;; the standard Dafny CLI for each change, reverifying the entire source file
-;; every time. This is inefficient, especially when editing a few functions in a
+;; every time.  This is inefficient, especially when editing a few functions in a
 ;; larger file.
 ;;
 ;; This file implements a client for the Dafny server, a command line utility
 ;; that allows non-.Net editors to take advantage of Dafny's caching facilities,
-;; as used by the Dafny extension for Visual Studio. The server is essentially a
+;; as used by the Dafny extension for Visual Studio.  The server is essentially a
 ;; REPL, which produces output in the same format as the Dafny CLI; clients thus
-;; do not need to understand the internals of Dafny's caching. A typical editing
+;; do not need to understand the internals of Dafny's caching.  A typical editing
 ;; session proceeds as follows:
 ;;
 ;; * When a new Dafny file is opened, the editor starts a new instance of the
-;;   Dafny server. The cache is blank at that point.
-;; * The editor sends a copy of the buffer for initial verification. This takes
+;;   Dafny server.  The cache is blank at that point.
+;; * The editor sends a copy of the buffer for initial verification.  This takes
 ;;   some time, after which the server returns a list of errors.
 ;; * The user makes modifications; the editor periodically sends a new copy of
 ;;   the buffer's contents to the Dafny server, which quickly returns an updated
 ;;   list of errors.
 ;;
 ;; The client-server protocol is sequential, uses JSON, and works over ASCII
-;; pipes by base64-encoding utf-8 queries. It defines one type of query, and two
+;; pipes by base64-encoding utf-8 queries.  It defines one type of query, and two
 ;; types of responses:
 ;;
 ;; Queries are of the following form:
@@ -163,7 +134,7 @@ The transcript file is saved under the name specified in variable
   (interactive)
   (setq inferior-dafny--debug (not inferior-dafny--debug))
   (inferior-dafny-info "inferior-dafny-debug %s"
-                       (if inferior-dafny--debug "enabled" "disabled")))
+         (if inferior-dafny--debug "enabled" "disabled")))
 
 ;;; Status variables and utilities
 
@@ -247,7 +218,7 @@ corresponding output buffer is created or recycled."
   (setq inferior-dafny--process (inferior-dafny-start-process))
   (add-hook 'kill-buffer-hook #'inferior-dafny-parent-buffer-killed)
   (inferior-dafny-info "Started inferior-dafny process for buffer %s"
-                       (buffer-name)))
+         (buffer-name)))
 
 (defun inferior-dafny-live-p ()
   "Check if the Dafny server is already running."
@@ -325,10 +296,13 @@ If `inferior-dafny--busy' is non-nil, complain loudly."
   (setq inferior-dafny--busy (current-time)
         inferior-dafny--callback callback
         dafny--flycheck-extra nil)
-  (when inferior-dafny--write-snapshots
-    (inferior-dafny-write-snapshot))
-  (inferior-dafny-update-transcript)
-  (process-send-string inferior-dafny--process (inferior-dafny-prepare-query)))
+  (if (inferior-dafny-live-p)
+      (progn
+        (when inferior-dafny--write-snapshots
+          (inferior-dafny-write-snapshot))
+        (inferior-dafny-update-transcript)
+        (process-send-string inferior-dafny--process (inferior-dafny-prepare-query)))
+    (inferior-dafny-callback 'errored "Could not start server")))
 
 (defmacro inferior-dafny-with-parent-buffer (proc-or-buf &rest body)
   "Find Dafny buffer that spawned PROC-OR-BUF and run BODY there."
@@ -344,7 +318,7 @@ If `inferior-dafny--busy' is non-nil, complain loudly."
 (defun inferior-dafny-sentinel (proc signal)
   "Sentinel function for PROC handling SIGNAL."
   (inferior-dafny-debug "Got signal [%s]; process-live-p: [%s]"
-                        signal (process-live-p proc))
+          signal (process-live-p proc))
   (when (not (process-live-p proc))
     (inferior-dafny-with-parent-buffer proc
       (inferior-dafny-killed))))
@@ -406,7 +380,7 @@ Pass the corresponding error list (or the error message,
 depending on STATUS) to the callback that was registered when
 verification was initiated."
   (inferior-dafny-debug "[inferior-dafny-handle-full-response] [%s] [%s]"
-                        status response)
+          status response)
   (inferior-dafny-with-parent-buffer proc
     (cond ((equal status "SUCCESS")
            (inferior-dafny-callback
@@ -471,7 +445,7 @@ preparation for the next verification."
       (error "Got unexpected status: [%s] [%s]" was-busy callback))
     (when (and was-busy callback)
       (inferior-dafny-debug "Verification took %.2fs"
-                            (float-time (time-since was-busy)))
+              (float-time (time-since was-busy)))
       ;; Careful: The callback may launch another verification.
       ;; We don't want to prevent it, so --busy and --callback must be nil here
       (funcall callback status data))))

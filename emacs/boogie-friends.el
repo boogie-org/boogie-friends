@@ -1,6 +1,6 @@
 ;;; boogie-friends.el --- A collection of programming modes for Boogie, Dafny, and Z3 (SMTLIB v2) -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Clément Pit--Claudel
+;; Copyright (C) 2015, 2016 Clément Pit--Claudel
 ;; Author: Clément Pit--Claudel <clement.pitclaudel@live.com>
 ;; URL: https://github.com/boogie-org/boogie-friends/
 ;; Package-Depends: ((cl-lib "0.5") (company "0.8.12") (dash "2.10.0") (flycheck "0.23") (yasnippet "0.9.0.1"))
@@ -31,8 +31,8 @@
 ;;; Commentary:
 
 ;; This package is a collection of tools for writing verified programs in
-;; languages of the Boogie family. Dafny and Boogie are the two currently
-;; supported languages. Features include:
+;; languages of the Boogie family.  Dafny and Boogie are the two currently
+;; supported languages.  Features include:
 ;;
 ;; * Syntax highlighting
 ;; * Real-time compilation (using flycheck)
@@ -48,10 +48,10 @@
 ;; * (Some support for) jumping to a definition
 ;; * (Experimental) Support for using Dafny as a verification server
 ;;
-;; See https://github.com/boogie-org/boogie-friends/ for a full description. The
-;; documentation that accompanies certain snippets in dafny-mode was not written
-;; as part of this package; it is automatically generated from Dafny's quick
-;; reference guide.
+;; See https://github.com/boogie-org/boogie-friends/ for a full description.
+;; The documentation that accompanies certain snippets in dafny-mode was not
+;; written as part of this package; it is automatically generated from Dafny's
+;; quick reference guide.
 
 ;;; Code:
 
