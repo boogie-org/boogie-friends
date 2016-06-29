@@ -93,7 +93,7 @@
 One of `cli', `server', or nil.
 
 * `cli' uses the standard Dafny binary (found at
-  `flycheck-dafny-executable'), which does not suport caching.
+  `flycheck-dafny-executable'), which does not support caching.
 
 * `server' uses a background Dafny server process (found at
   `flycheck-inferior-dafny-executable') and supports caching.
@@ -315,8 +315,8 @@ character in the line otherwise."
 
 (defun dafny-jump-to-boogie-internal (line &optional buffer)
   "Jump to translation of LINE in boogie buffer BUFFER.
-Attemps to guess the right buffer if BUFFER is nil.  If unable to
-find references to LINE, look for references to neighbouring
+Attempts to guess the right buffer if BUFFER is nil.  If unable to
+find references to LINE, look for references to neighboring
 lines."
   (-when-let* ((buffer (or buffer
                            (-when-let* ((bpl-fname (boogie-friends-translated-fname)))

@@ -127,8 +127,8 @@ must an whole number of seconds.")
 Only for temporary assignment of internal values")
 
 (defvar boogie-friends--prover-running-in-foreground-p nil
-  "Bolean flag indicating whether the prover is being explicitly invoked.
-If non-nil, background args will be ommitted from prover invocations.")
+  "Boolean flag indicating whether the prover is being explicitly invoked.
+If non-nil, background args will be omitted from prover invocations.")
 
 (defvar boogie-friends-last-trace nil
   "Cache of the last trace information obtained for this buffer.")
@@ -161,17 +161,17 @@ of the type causes Emacs to not parse sufficiently
 greedily (the opening bracket is matched by \\s_).")
 
 (defconst boogie-friends-font-lock-array-sub "\\(?:\\[[^\\[\\]]+\\]\\)"
-  "Regexp used to detect array subscriptions")
+  "Regexp used to detect array subscriptions.")
 
 (defconst boogie-friends-font-lock-var-w-type (concat boogie-friends-font-lock-var boogie-friends-font-lock-array-sub "?\\(\\(?:\\s-*:\\s-*" boogie-friends-font-lock-type "\\)?\\)")
-  "Regexp used to detect variable names optionally followed by a type")
+  "Regexp used to detect variable names optionally followed by a type.")
 
 (defconst boogie-friends-font-lock-assignment-chain (concat "\\(?:\\_<var\\_>\\s-*\\)?" "\\(?:" boogie-friends-font-lock-var-w-type "\\)"
                                                             "\\(?:\\s-*,\\s-*" boogie-friends-font-lock-var-w-type "\\)*\\s-*:[=|]")
-  "Regexp used to detect [x, y:int, t := 1, 2, 3]")
+  "Regexp used to detect [x, y:int, t := 1, 2, 3].")
 
 (defun boogie-friends-mark-font-lock-assignment-chain (limit)
-  "Font lock matcher function for multi-assignments."
+  "Font lock matcher function (up to LIMIT) for multi-assignments."
   (when (re-search-forward boogie-friends-font-lock-assignment-chain limit t)
     (goto-char (match-end 2))))
 
@@ -484,8 +484,8 @@ form (FUNCTION-NAME . TIME)"
              #'> :key #'cdr)))
 
 (defun boogie-friends-make-keymap (&optional include-profiling)
-  "Constructs a keemap suitable for boogie-related languages.
-If INCLUDE-PROFILING is non-nil, add keybindings for tracing and profiling."
+  "Constructs a keymap suitable for boogie-related languages.
+If INCLUDE-PROFILING is non-nil, add bindings for tracing and profiling."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "}") #'boogie-friends-self-insert-and-indent)
     (define-key map (kbd "C-c C-c") #'boogie-friends-verify)
@@ -581,7 +581,7 @@ Matching is fuzzy."
 
 (defun boogie-friends-sort-generic (seq predicates-alist)
   "Sort SEQ lexicographically.
-PREDICATES-ALIST is an ALIST of (EXCTRACTION . COMPARISON).
+PREDICATES-ALIST is an ALIST of (EXTRACTION . COMPARISON).
 values are compared by running EXTRACTION first, and then
 COMPARISON.  If two extractions compare equal, the next alist
 entry is used for comparison."
