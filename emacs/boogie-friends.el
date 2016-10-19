@@ -95,26 +95,28 @@
   :fringe-bitmap nil :fringe-face nil
   :error-list-face 'flycheck-error-list-info)
 
-(defconst boogie-friends-message-pattern
-  '(message (* nonl)
+(defun boogie-friends-message-pattern (&rest header)
+  "See `boogie-friends-error-patterns' (HEADER is part of the message)."
+  `(message ,@header (* nonl)
             ;; (? (+ (or "\n" "\r")) "Execution trace:") ;; We don't really want to catch error traces
-            (* (+ (or "\n" "\r")) " " (+ nonl)))
-  "See `boogie-friends-error-patterns'.")
+            (* (+ (or "\n" "\r")) " " (+ nonl))))
 
 (defconst boogie-friends-error-patterns
   (let ((header     '(bol (file-name) "(" line "," column "): "))
         (colonspace '((? ":") (? " "))))
     `((error "*** Error: " (message)) ;; Startup errors
       (error ,@header "Error" ,@colonspace
-             ,boogie-friends-message-pattern)
-      (error ,@header "Timed out on" (? " " (+ (char "A-Z")) (+ (char "0-9"))) ,@colonspace
-             ,boogie-friends-message-pattern)
+             ,(boogie-friends-message-pattern))
+      (error ,@header ,(boogie-friends-message-pattern "Timed out on"))
+      (error ,@header ,(boogie-friends-message-pattern "Verification of "
+                                         '(+ (not (any " ")))
+                                         " timed out"))
       (warning ,@header "Warning" ,@colonspace
-               ,boogie-friends-message-pattern)
-      (warning ,@header "Related location" ,@colonspace
-               ,boogie-friends-message-pattern)
+               ,(boogie-friends-message-pattern))
+      (warning ,@header ;; Include "Related location", otherwise message is blank
+               ,(apply #'boogie-friends-message-pattern "Related location" colonspace))
       (tooltip ,@header "Info" ,@colonspace
-               ,boogie-friends-message-pattern)))
+               ,(boogie-friends-message-pattern))))
   "Error patterns for the Dafny and Boogie checkers.")
 
 (defcustom boogie-friends-profiler-timeout 60
@@ -448,8 +450,7 @@ If REV is non-nil, cycle in the opposite order."
       (funcall indent-line-function))))
 
 (defun boogie-friends-cleanup-errors (errs)
-  ;; Remove indentation that was added only to make it easier to parse
-  ;; multiline error messages, and cleanup leading spaces
+  "Remove indentation and clean up leading spaces in ERRS."
   (dolist (err errs)
     (let* ((msg (flycheck-error-message err))
            (clean (and msg (replace-regexp-in-string ;; Remove spurious indentation
@@ -461,8 +462,7 @@ If REV is non-nil, cycle in the opposite order."
                               (replace-regexp-in-string ;; Normalize line endings
                                "\\(\r\n\\|\r\\)" "\n"
                                msg)))))))
-      (setf (flycheck-error-message err)
-            (if (string= (or clean "") "") "Related location" clean))))
+      (setf (flycheck-error-message err) clean)))
   errs)
 
 (defun boogie-friends-parse-trace-entry ()
