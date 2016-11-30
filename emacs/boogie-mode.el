@@ -97,10 +97,7 @@ with a prefix arg."
      (cons (concat "\\(" (regexp-opt '("bool" "int" "real") 'symbols) "\\)\\|\\(\\_<bv[0-9]+\\_>\\)") font-lock-type-face)
      (list "{:[^{\n]+}" '(0 font-lock-constant-face append))
      (list "\\({\\s-*\\)\\([^{\n]+?\\)\\(\\s-*}\\)"
-           '(1 font-lock-constant-face) '(2 '(face italic) prepend) '(3 font-lock-constant-face))
-     (list "\\(\\_<forall\\)\\(\\_>\\|<[^>]>\\)?"
-           '(1 (compose-region (match-beginning 1) (match-end 1) ?∀))
-           '(1 font-lock-keyword-face append))))
+           '(1 font-lock-constant-face) '(2 '(face italic) prepend) '(3 font-lock-constant-face))))
   "Font lock specifications for `boogie-mode'.")
 
 (defvar boogie-mode-map

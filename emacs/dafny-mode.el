@@ -189,10 +189,7 @@ the return value."
    (cons "!\\_<in\\_>" font-lock-keyword-face) ;; Needed because '!' is not part of a symbol, so adding '!in' to keywords doesn't work
    (cons dafny-keywords-regexp font-lock-keyword-face)
    (cons dafny-types-regexp font-lock-type-face)
-   (list "\\(!\\)\\([^=i!]\\|$\\)" 1 font-lock-negation-char-face)
-   (list "\\(\\_<forall\\_>\\).*?::"
-         '(1 (compose-region (match-beginning 1) (match-end 1) ?∀))
-         '(1 font-lock-keyword-face append)))
+   (list "\\(!\\)\\([^=i!]\\|$\\)" 1 font-lock-negation-char-face))
   "Font lock specifications for `dafny-mode'.")
 
 (defun dafny-ignore-event (_e)

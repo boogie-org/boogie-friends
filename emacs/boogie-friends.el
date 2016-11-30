@@ -76,7 +76,7 @@
 (defconst boogie-friends-symbols-alist '(("<=" . ?≤) (">=" . ?≥) ("!=" . ?≠) (":=" . ?≔)
                                          ("&&" . ?∧) ("||" . ?∨) ("=>" . ?⇒) ("->" . ?→)
                                          ("<==>" . ?⟺) ("==>" . ?⟹) ("<==" . ?⟸)
-                                         ("exists" . ?∃) ("::" . ?∙))
+                                         ("forall" . ?∀) ("exists" . ?∃) ("::" . ?∙))
   "Symbols used in conjunction with `prettify-minor-mode'.")
 
 (defface boogie-friends-flycheck-tooltip
