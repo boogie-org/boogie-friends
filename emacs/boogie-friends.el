@@ -102,7 +102,7 @@
             (* (+ (or "\n" "\r")) " " (+ nonl))))
 
 (defconst boogie-friends-error-patterns
-  (let ((header     '(bol (file-name) "(" line "," column "): "))
+  (let ((header     '(bol (opt (file-name)) "(" line "," column "): "))
         (colonspace '((? ":") (? " "))))
     `((error "*** Error: " (message)) ;; Startup errors
       (error ,@header "Error" ,@colonspace
