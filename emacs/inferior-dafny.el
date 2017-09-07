@@ -230,7 +230,7 @@ corresponding output buffer is created or recycled."
 (defun inferior-dafny-get-source-as-file ()
   "Save a snapshot of the buffer and return its path in a plist."
   (let ((temp-fname (flycheck-save-buffer-to-temp
-                     #'flycheck-temp-file-inplace)))
+                     #'flycheck-temp-file-system)))
     `(:source ,temp-fname :sourceIsFile t)))
 
 (defun inferior-dafny-get-source-as-string ()
