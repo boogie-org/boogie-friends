@@ -75,6 +75,7 @@
 
 (defconst boogie-friends-symbols-alist '(("<=" . ?≤) (">=" . ?≥) ("!=" . ?≠) (":=" . ?≔)
                                          ("&&" . ?∧) ("||" . ?∨) ("=>" . ?⇒) ("->" . ?→)
+                                         ("-->" . ?↛) ("~>" . ?↝)
                                          ("<==>" . ?⟺) ("==>" . ?⟹) ("<==" . ?⟸)
                                          ("exists" . ?∃) ("::" . ?∙))
   "Symbols used in conjunction with `prettify-minor-mode'.")

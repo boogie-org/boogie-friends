@@ -55,7 +55,7 @@
                            "true" "var" "where" "while" "yield"))
 
 (defconst dafny-types '("array" "array2" "array3" "bool" "char" "imap" "int" "iset" "map" "multiset" "nat" "object"
-                        "real" "seq" "set" "string"))
+                        "real" "seq" "set" "string" "ORDINAL"))
 
 (defconst dafny-block-heads '("calc" "else" "if" "match" "while"))
 
