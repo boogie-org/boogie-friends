@@ -60,9 +60,7 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
 
 #### Automatic
 
-1. Setup [MELPA](http://melpa.org/#/getting-started)
-
-    In your `.emacs`, add these three lines if you don't have them yet:
+1. Setup MELPA by adding the following lines to your .emacs if you don't have them already (here's [more information](http://melpa.org/#/getting-started) if you have trouble with this step):
 
     ```elisp
     (require 'package) ;; You might already have this line
