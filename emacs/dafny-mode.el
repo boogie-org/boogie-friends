@@ -40,19 +40,23 @@
 (require 'dafny-docs)
 (require 'inferior-dafny)
 
-(defconst dafny-defuns '("class" "codatatype" "colemma" "const" "constructor" "copredicate" "datatype" "function"
-                         "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
-                         "function method" "predicate method"))
+(defconst dafny-defuns
+  '("class" "codatatype" "colemma" "const" "constructor" "copredicate" "datatype" "export" "function"
+    "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
+    "function method" "predicate method"))
 
-(defconst dafny-specifiers '("decreases" "ensures" "free" "invariant" "modifies" "reads" "requires"))
+(defconst dafny-specifiers
+  '("decreases" "ensures" "free" "invariant" "modifies" "provides" "reads" "reveals" "requires"))
 
-(defconst dafny-modifiers '("inductive" "abstract" "ghost" "protected" "static"))
+(defconst dafny-modifiers '("inductive" "abstract" "ghost" "protected" "static" "twostate"))
 
 (defconst dafny-builtins '("as" "default" "extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
 
-(defconst dafny-keywords '("assert" "assume" "break" "calc" "case" "else" "exists" "false" "forall" "fresh" "if"
-                           "in" "label" "match" "modify" "new" "null" "old" "print" "return" "reveal" "then" "this"
-                           "true" "var" "where" "while" "yield"))
+(defconst dafny-keywords
+  '("allocated" "assert" "assume" "break" "calc" "case" "else" "exists" "false"
+    "forall" "fresh" "if" "in" "label" "match" "modify" "new" "null" "old"
+    "print" "return" "reveal" "then" "this" "true" "unchanged" "var" "where"
+    "while" "yield"))
 
 (defconst dafny-types '("array" "array2" "array3" "bool" "char" "imap" "int" "iset" "map" "multiset" "nat" "object"
                         "real" "seq" "set" "string" "ORDINAL"))
