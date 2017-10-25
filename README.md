@@ -120,7 +120,14 @@ Real-time error highlighting is enabled by default for all languages. You can di
 
 * For just one language (say Dafny) by adding `(setq flycheck-disabled-checkers '(dafny))` to your `.emacs`.
 
-* Entirely by adding `(flycheck-mode -1)` to `'boogie-friends-mode-hook`.
+* Entirely by adding the following to your `.emacs`:
+
+    ```
+        ```elisp
+    (defun no-flycheck-in-dafny-mode ()
+      (flycheck-mode -1))
+    (add-hook 'dafny-mode-hook #'no-flycheck-in-dafny-mode)
+    ```
 
 #### Font support
 
@@ -133,9 +140,11 @@ If you see blocks instead of proper characters, or tall characters, or ugly char
     (set-fontset-font t 'unicode (font-spec :name "Symbola") nil 'append)
     ```
 
-3. If that still doesn't work, turn of prettification entirely by adding the following to `setup-boogie-friends` above:
+3. If that still doesn't work, turn of prettification entirely by adding the following to your `.emacs`:
     ```elisp
-    (prettify-symbols-mode -1)
+    (defun no-prettification-in-dafny-mode ()
+      (prettify-symbols-mode -1))
+    (add-hook 'dafny-mode-hook #'no-prettification-in-dafny-mode)
     ```
 
 If you don't like the way one particular symbol is rendered, you can adjust the font for just that one:
