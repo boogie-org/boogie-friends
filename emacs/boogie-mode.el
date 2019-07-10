@@ -118,8 +118,8 @@ with a prefix arg."
     (modify-syntax-entry ?. "w" tbl)
     ;; Comments
     (modify-syntax-entry ?\n ">" tbl)
-    (modify-syntax-entry ?/  "  124" tbl)
-    (modify-syntax-entry ?*  "  23bn" tbl)
+    (modify-syntax-entry ?/  ". 124" tbl)
+    (modify-syntax-entry ?*  ". 23bn" tbl)
     tbl)
   "Syntax table for `boogie-mode'.")
 
