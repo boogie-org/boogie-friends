@@ -38,9 +38,12 @@
 (require 'boogie-friends)
 (require 'cl-lib)
 
-(defconst z3-smt2-builtins '("assert" "check-sat" "declare-fun" "declare-sort" "define-fun" "define-sort" "exit"
-                             "get-assertions" "get-assignment" "get-info" "get-option" "get-proof" "get-unsat-core"
-                             "get-value" "pop" "push" "set-info" "set-logic" "set-option"))
+(defconst z3-smt2-builtins '("assert" "check-sat" "check-sat-assuming" "declare-const" "declare-datatype"
+                             "declare-datatypes" "declare-fun" "declare-sort" "define-fun" "define-fun-rec"
+                             "define-sort" "echo" "exit" "get-assertions" "get-assignment" "get-info"
+                             "get-model" "get-option" "get-proof" "get-unsat-assumptions" "get-unsat-core" 
+                             "get-value" "pop" "push" "reset" "reset-assertions" "set-info" "set-logic" 
+                             "set-option"))
 
 (defconst z3-smt2-types '("Array" "Set" "List" "Bool" "Int" "Real"))
 
