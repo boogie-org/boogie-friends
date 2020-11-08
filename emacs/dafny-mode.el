@@ -206,6 +206,7 @@ Useful to ignore mouse-up events handled mouse-down events."
 
 (defvar dafny-mode-map
   (let ((map (boogie-friends-make-keymap t)))
+    (define-key map (kbd "}") #'boogie-friends-self-insert-and-indent)
     (define-key map (kbd "C-c C-a") 'boogie-friends-translate)
     (define-key map (kbd "C-c C-b") 'dafny-insert-attribute)
     (define-key map (kbd "C-c C-j") 'dafny-jump-to-boogie)

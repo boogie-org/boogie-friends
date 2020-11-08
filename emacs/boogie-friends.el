@@ -488,7 +488,6 @@ form (FUNCTION-NAME . TIME)"
   "Constructs a keymap suitable for boogie-related languages.
 If INCLUDE-PROFILING is non-nil, add bindings for tracing and profiling."
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "}") #'boogie-friends-self-insert-and-indent)
     (define-key map (kbd "C-c C-c") #'boogie-friends-verify)
     (when include-profiling
       (define-key map (kbd "C-c C-p") #'boogie-friends-profile)
