@@ -122,8 +122,7 @@ Real-time error highlighting is enabled by default for all languages. You can di
 
 * Entirely by adding the following to your `.emacs`:
 
-    ```
-        ```elisp
+    ```elisp
     (defun no-flycheck-in-dafny-mode ()
       (flycheck-mode -1))
     (add-hook 'dafny-mode-hook #'no-flycheck-in-dafny-mode)
