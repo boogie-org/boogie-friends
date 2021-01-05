@@ -41,24 +41,30 @@
 (require 'inferior-dafny)
 
 (defconst dafny-defuns
-  '("class" "codatatype" "colemma" "const" "constructor" "copredicate" "datatype" "export" "function"
+  '("class" "codatatype" "const" "constructor" "datatype" "export" "function"
     "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
-    "function method" "predicate method"))
+    "function method" "predicate method"
+    "least predicate" "greatest predicate" "least lemma" "greatest lemma"))
 
 (defconst dafny-specifiers
-  '("decreases" "ensures" "free" "invariant" "modifies" "provides" "reads" "reveals" "requires"))
+  '("decreases" "ensures" "invariant" "modifies" "provides" "reads" "reveals" "requires" "witness"))
 
-(defconst dafny-modifiers '("inductive" "abstract" "ghost" "protected" "static" "twostate"))
+(defconst dafny-modifiers '("abstract" "ghost" "static" "twostate"))
 
-(defconst dafny-builtins '("as" "default" "extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
+(defconst dafny-builtins '("as" "extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
 
 (defconst dafny-keywords
-  '("allocated" "assert" "assume" "break" "calc" "case" "else" "exists" "false"
+  '("allocated" "assert" "assume" "break" "by" "calc" "case" "else" "exists" "expect" "false"
     "forall" "fresh" "if" "in" "label" "match" "modify" "new" "null" "old"
     "print" "return" "reveal" "then" "this" "true" "unchanged" "var" "where"
     "while" "yield"))
 
-(defconst dafny-types '("array" "array2" "array3" "bool" "char" "imap" "int" "iset" "map" "multiset" "nat" "object"
+(defconst dafny-types '("array" "array?" "array2" "array2?" "array3" "array3?"
+                        "bool"
+                        "bv0" "bv1" "bv2" "bv3" "bv4" "bv5" "bv6" "bv7" "bv8" "bv9"
+                        "bv10" "bv11" "bv12" "bv13" "bv14" "bv15" "bv16"
+                        "bv24" "bv32" "bv64" "bv128" "bv256" "bv512" "bv1024" "bv2048"
+                        "char" "imap" "int" "iset" "map" "multiset" "nat" "object" "object?"
                         "real" "seq" "set" "string" "ORDINAL"))
 
 (defconst dafny-block-heads '("calc" "else" "if" "match" "while"))
