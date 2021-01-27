@@ -51,7 +51,7 @@
   "IDE extensions for the Boogie programming language."
   :group 'boogie-friends)
 
-(defcustom boogie-prover-args '("/nologo")
+(defcustom boogie-prover-args '()
   "Arguments to pass to Boogie when checking a file.
 The name of the file itself is added last.  You can override all
 arguments here, or use `boogie-prover-custom-args' to add just a
@@ -132,7 +132,7 @@ with a prefix arg."
 
 (defun boogie-translation-prover-args-fn (dest-fname)
   "Extra arguments to translate to lower level source"
-  (list "/nologo" (concat "/proverLog:" dest-fname)))  ;; FIXME it should be possible to /noVerify here
+  (list (concat "/proverLog:" dest-fname)))  ;; FIXME it should be possible to /noVerify here
 
 (defun boogie-profiler-prepare-fn (_use-alternate callback)
   "Prepare a boogie source buffer before launching the profiler"

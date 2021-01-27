@@ -109,7 +109,7 @@ One of `cli', `server', or nil.
                 (const :tag "None" nil))
   :group 'dafny)
 
-(defcustom dafny-prover-args '("/compile:0" "/nologo")
+(defcustom dafny-prover-args '("/compile:0")
   "Arguments to pass to Dafny when checking a file.
 The name of the file itself is added last.  You can override all
 arguments here, or use `dafny-prover-custom-args' to add just a
@@ -240,7 +240,7 @@ Useful to ignore mouse-up events handled mouse-down events."
 
 (defun dafny-translation-prover-args-fn (dest-fname)
   "Extra arguments to translate to lower level source"
-  (list "/nologo" "/noVerify" (concat "/print:" dest-fname)))
+  (list "/noVerify" (concat "/print:" dest-fname)))
 
 (defun dafny-profiler-prepare-fn (use-alternate callback)
   "Prepare a boogie source buffer before launching the profiler"
