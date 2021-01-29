@@ -56,7 +56,7 @@
 (defconst dafny-keywords
   '("allocated" "assert" "assume" "break" "by" "calc" "case" "else" "exists" "expect" "false"
     "forall" "fresh" "if" "in" "label" "match" "modify" "new" "null" "old"
-    "print" "return" "reveal" "then" "this" "true" "unchanged" "var" "where"
+    "print" "return" "reveal" "then" "this" "true" "unchanged" "var"
     "while" "yield"))
 
 (defconst dafny-types '("array" "array?" "array2" "array2?" "array3" "array3?"
