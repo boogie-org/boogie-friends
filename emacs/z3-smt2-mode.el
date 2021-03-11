@@ -115,12 +115,16 @@ with a prefix arg."
 
 (defconst z3-smt2-error-patterns
   '((error bol "(error \"line " line " column " column ":" (message) "\")" eol)
+    (error bol "ERROR: line " line " column " column ":" (message)  eol)
     (warning bol "WARNING: " (message)  eol)))
 
 (flycheck-define-command-checker 'z3-smt2
   "Flycheck checker for the SMT2 format."
   :command '("z3" (eval (boogie-friends-compute-prover-args)) source-inplace)
   :error-patterns z3-smt2-error-patterns
+  :error-filter (lambda (errors)
+                  (flycheck-sanitize-errors
+                   (flycheck-increment-error-columns errors)))
   :modes '(z3-smt2-mode))
 
 (add-to-list 'flycheck-checkers 'z3-smt2)
