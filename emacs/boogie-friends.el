@@ -513,7 +513,7 @@ If INCLUDE-PROFILING is non-nil, add bindings for tracing and profiling."
 
 (defun boogie-friends-cleanup-snippet (snippet)
   "Cleanup SNIPPET, yielding a better-looking string."
-  (cl-loop for new-snippet = (replace-regexp-in-string "${\\([0-9]+:\\)?\\([^{}]+\\)}" "\\2" snippet)
+  (cl-loop for new-snippet = (replace-regexp-in-string "\\${\\([0-9]+:\\)?\\([^{}]+\\)}" "\\2" snippet)
            while (not (equal new-snippet snippet)) do (setq snippet new-snippet)
            finally return (replace-regexp-in-string "\\(\n\\|\\s-\\)+" " " new-snippet)))
 
