@@ -514,7 +514,7 @@ If KILL-BUFFER is non-nil, get rid of its output buffer as well."
   "Send a self-test query to the server and check the output."
   (-when-let* ((output (ignore-errors
                          (process-lines
-                          flycheck-inferior-dafny-executable "selftest")))
+                          flycheck-inferior-dafny-executable "-selftest")))
                (status-line (car-safe (last output))))
     (save-match-data
       (and (string-match inferior-dafny-server-eom-tag-regexp status-line)
