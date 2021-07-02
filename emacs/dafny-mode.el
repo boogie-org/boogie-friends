@@ -49,14 +49,14 @@
 (defconst dafny-specifiers
   '("decreases" "ensures" "invariant" "modifies" "provides" "reads" "reveals" "requires" "witness"))
 
-(defconst dafny-modifiers '("abstract" "ghost" "static" "twostate"))
+(defconst dafny-modifiers '("abstract" "ghost" "nameonly" "static" "twostate"))
 
-(defconst dafny-builtins '("as" "extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
+(defconst dafny-builtins '("extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
 
 (defconst dafny-keywords
-  '("allocated" "assert" "assume" "break" "by" "calc" "case" "else" "exists" "expect" "false"
-    "forall" "fresh" "if" "in" "label" "match" "modify" "new" "null" "old"
-    "print" "return" "reveal" "then" "this" "true" "unchanged" "var"
+  '("allocated" "as" "assert" "assume" "break" "by" "calc" "case" "downto" "else" "exists" "expect" "false"
+    "for" "forall" "fresh" "if" "in" "is" "label" "match" "modify" "new" "null" "old"
+    "print" "return" "reveal" "then" "this" "to" "true" "unchanged" "var"
     "while" "yield"))
 
 (defconst dafny-types '("array" "array?" "array2" "array2?" "array3" "array3?"
