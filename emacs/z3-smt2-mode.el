@@ -1,7 +1,7 @@
 ;;; z3-smt2-mode.el --- Support for the SMT2 format -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Clément Pit--Claudel
-;; Author: Clément Pit--Claudel <clement.pitclaudel@live.com>
+;; Copyright (C) 2015, 2016 Clément Pit-Claudel
+;; Author: Clément Pit-Claudel <clement.pitclaudel@live.com>
 ;; URL: https://github.com/boogie-org/boogie-friends/
 
 ;; Keywords: convenience, languages

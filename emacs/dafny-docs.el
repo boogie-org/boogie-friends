@@ -1,7 +1,7 @@
 ;;; dafny-docs.el --- Simple in-Emacs documentation for Dafny -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Clément Pit--Claudel
-;; Author: Clément Pit--Claudel <clement.pitclaudel@live.com>
+;; Copyright (C) 2015, 2016 Clément Pit-Claudel
+;; Author: Clément Pit-Claudel <clement.pitclaudel@live.com>
 ;; URL: https://github.com/boogie-org/boogie-friends/
 
 ;; Keywords: convenience, languages

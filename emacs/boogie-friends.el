@@ -1,7 +1,7 @@
 ;;; boogie-friends.el --- A collection of programming modes for Boogie, Dafny, and Z3 (SMTLIB v2) -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Clément Pit--Claudel
-;; Author: Clément Pit--Claudel <clement.pitclaudel@live.com>
+;; Copyright (C) 2015, 2016 Clément Pit-Claudel
+;; Author: Clément Pit-Claudel <clement.pitclaudel@live.com>
 ;; URL: https://github.com/boogie-org/boogie-friends/
 ;; Package-Depends: ((cl-lib "0.5") (company "0.8.12") (dash "2.10.0") (flycheck "0.23") (yasnippet "0.9.0.1") (emacs "24.4"))
 ;; Version: 0.1

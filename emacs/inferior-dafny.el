@@ -1,7 +1,7 @@
 ;;; inferior-dafny.el --- Using Dafny as a verification server -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Clément Pit--Claudel
-;; Author: Clément Pit--Claudel <clement.pitclaudel@live.com>
+;; Copyright (C) 2015, 2016 Clément Pit-Claudel
+;; Author: Clément Pit-Claudel <clement.pitclaudel@live.com>
 ;; URL: https://github.com/boogie-org/boogie-friends/
 
 ;; Keywords: convenience, languages
@@ -491,7 +491,7 @@ If KILL-BUFFER is non-nil, get rid of its output buffer as well."
 (defun inferior-dafny-killed ()
   "Reset various variables after the server is killed."
   (when inferior-dafny--callback
-    (inferior-dafny-callback 'errored "Killed"))
+    (inferior-dafny-callback 'interrupted "Killed"))
   (setq inferior-dafny--busy nil
         inferior-dafny--callback nil
         inferior-dafny--process nil
