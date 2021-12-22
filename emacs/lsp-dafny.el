@@ -177,12 +177,15 @@ CLIENT and UPDATE? are ignored."
   (pcase lsp-dafny--verification-status
     (`nil "")
     (`(,status ,icon ,tooltip)
-     (propertize icon
-                 'face `(bold ,(pcase status
-                                 (`running 'compilation-mode-line-run)
-                                 (`t 'compilation-mode-line-exit)
-                                 (`nil 'compilation-mode-line-fail)))
-                 'help-echo tooltip))))
+     (let ((face (pcase status
+                   (`running 'compilation-mode-line-run)
+                   (`t 'compilation-mode-line-exit)
+                   (`nil 'compilation-mode-line-fail))))
+     (propertize (if (eq (length icon) 1)
+                     (compose-string icon 0 1 (concat "\t" icon "\t"))
+                   icon)
+                 'face `(bold ,face)
+                 'help-echo tooltip)))))
 
 (defconst lsp-dafny--mode-line-process
   '(:eval (lsp-dafny--mode-line-process-format)))
