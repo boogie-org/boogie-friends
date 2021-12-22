@@ -15,9 +15,9 @@
 
 ;;; Code:
 
-(require 'boogie-friends)
-(require 'lsp)
+(require 'lsp-mode)
 (require 'lsp-protocol)
+(require 'boogie-friends)
 
 ;;;; Customization
 
@@ -35,9 +35,9 @@
   :type '(choice (const :tag "Any version (download the latest)" nil)
                  (string :tag "A specific version")))
 
-(defcustom lsp-dafny-server-install-dir
+(defcustom lsp-dafny-server-install-root
   (expand-file-name "dafny" lsp-server-install-dir)
-  "Where to install Dafny."
+  "Where to install Dafny servers."
   :risky t
   :type 'directory)
 
@@ -71,9 +71,16 @@
 
 ;;;; Server installation
 
+(defun lsp-dafny-server-install-dir (&optional vernum)
+  "Compute the path to Dafny's installation folder for version VERNUM.
+
+VERNUM defaults to `lsp-dafny-preferred-version'."
+  (setq vernum (or vernum lsp-dafny-preferred-version))
+  (expand-file-name (format "v%s" vernum) lsp-dafny-server-install-root))
+
 (defun lsp-dafny--installed-executable (executable)
   "Compute the path to an installed Dafny EXECUTABLE."
-  (expand-file-name executable lsp-dafny-server-install-dir))
+  (expand-file-name executable (lsp-dafny-server-install-dir)))
 
 (defun lsp-dafny--server-installed-executable ()
   "Compute the path to the installed version of DafnyLanguageServer."
@@ -94,6 +101,14 @@ VERNUM defaults to `lsp-dafny-preferred-version'."
             "https://github.com/dafny-lang/dafny/releases/download"
             vernum vernum platform)))
 
+(defun lsp-dafny--server-install-callback (root vernum callback)
+  "Install Dafny version VERNUM from ROOT/dafny and call CALLBACK."
+  (condition-case _
+      (rename-file (expand-file-name "dafny" root)
+                   (lsp-dafny-server-install-dir vernum))
+    (file-already-exists nil))
+  (funcall callback))
+
 (defun lsp-dafny--server-install (client callback error-callback update?)
   "Download Dafny and install it to `lsp-dafny-server-install-dir'.
 
@@ -102,14 +117,17 @@ Version installed is determined by `lsp-dafny-preferred-version'.
 Call CALLBACK on success; call ERROR-CALLBACK otherwise.
 CLIENT and UPDATE? are ignored."
   (ignore client update?)
-  (lsp-download-install
-   (lambda (&rest _)
-     ;; FIXME (set-file-modes (lsp-dafny--server-installed-executable) #o0700)
-     (funcall callback))
-   error-callback
-   :url (lsp-dafny--zip-url)
-   :store-path lsp-dafny-server-install-dir
-   :decompress :zip))
+  (let* ((root lsp-dafny-server-install-root)
+         (vernum lsp-dafny-preferred-version)
+         (dl-dir (lsp-dafny-server-install-dir)))
+    (make-directory dl-dir t)
+    (lsp-download-install
+     (apply-partially
+      #'lsp-dafny--server-install-callback root vernum callback)
+     error-callback
+     :url (lsp-dafny--zip-url vernum)
+     :store-path dl-dir
+     :decompress :zip)))
 
 ;;;; Custom notifications
 
