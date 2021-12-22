@@ -154,8 +154,10 @@ CLIENT and UPDATE? are ignored."
         (list 'running "…" "Verification started"))
        ("VerificationFailed"
         (list nil "✗" "Verification failed"))
-       ((or "Verification Succeeded")
-        (list t "✓" "Verification succeeded"))))
+       ((or "VerificationSucceeded")
+        (list t "✓" "Verification succeeded"))
+       (other
+        (list 'running other "Unknown status"))))
     (force-mode-line-update)))
 
 (defconst lsp-dafny--notification-handlers
