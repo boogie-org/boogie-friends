@@ -109,6 +109,17 @@ VERNUM defaults to `lsp-dafny-preferred-version'."
     (file-already-exists nil))
   (funcall callback))
 
+(defconst lsp-dafny-known-versions
+  '("3.0.0" "3.1.0" "3.2.0" "3.3.0"))
+
+(defun lsp-dafny--validate-version ()
+  "Validate `lsp-dafny-preferred-version'."
+  (let ((vernum lsp-dafny-preferred-version))
+    (if (member vernum lsp-dafny-known-versions)
+        (user-error "Expected `lsp-dafny-preferred-version' \
+to be one of %S, but found `%s'" lsp-dafny-known-versions vernum)
+      vernum)))
+
 (defun lsp-dafny--server-install (client callback error-callback update?)
   "Download Dafny and install it to `lsp-dafny-server-install-dir'.
 
@@ -118,8 +129,8 @@ Call CALLBACK on success; call ERROR-CALLBACK otherwise.
 CLIENT and UPDATE? are ignored."
   (ignore client update?)
   (let* ((root lsp-dafny-server-install-root)
-         (vernum lsp-dafny-preferred-version)
-         (dl-dir (lsp-dafny-server-install-dir)))
+         (dl-dir (lsp-dafny-server-install-dir))
+         (vernum (lsp-dafny--validate-version)))
     (make-directory dl-dir t)
     (lsp-download-install
      (apply-partially
