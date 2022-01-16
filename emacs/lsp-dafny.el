@@ -64,14 +64,14 @@
                  (const :tag "Verify on change" onchange)
                  (const :tag "Verify on save" onsave)))
 
-(defcustom lsp-dafny-server-verification-time-limit 0
+(defcustom lsp-dafny-server-verification-time-limit 10
   "How long to search for a proof before giving up."
   :type '(choice (const :tag "No limit" 0)
                  (integer :tag "Give up after this many seconds")))
 
 ;; TODO "--ghost:markStatements=true"
 
-(defcustom lsp-dafny-server-args nil
+(defcustom lsp-dafny-server-args '("--verifier:verifySnapshots=3")
   "Dafny language server arguments."
   :risky t
   :type '(repeat string))
