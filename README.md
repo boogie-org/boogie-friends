@@ -58,9 +58,7 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
 
 ### Setup
 
-#### Automatic
-
-1. Setup MELPA by adding the following lines to your .emacs if you don't have them already (here's [more information](http://melpa.org/#/getting-started) if you have trouble with this step):
+1. Setup MELPA by adding the following lines to your `.emacs` if you don't have them already (here's [more information](http://melpa.org/#/getting-started) if you have trouble with this step):
 
     ```elisp
     (require 'package) ;; You might already have this line
@@ -70,19 +68,17 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
 
 2. Install the package: `M-x package-refresh-contents RET`, then `M-x package-install RET boogie-friends RET`
 
-3. Indicate the paths to your Dafny and Boogie installations:
+3. Optionally, use `M-x customize-variable RET lsp-dafny-preferred-version` to chose which version of Dafny to install and run.
 
-    In your `.emacs`:
+4. Use `M-x lsp` in a Dafny file (`.dfy`) to turn on on-the-fly verification and advanced IDE features.
 
-    ```elisp
-    (setq flycheck-dafny-executable "PATH-TO-Dafny.exe")
-    (setq flycheck-boogie-executable "PATH-TO-BOOGIE")
-    (setq flycheck-z3-smt2-executable "PATH-TO-Z3")
-    (setq flycheck-inferior-dafny-executable "PATH-TO-DafnyServer.exe") ;; Optional
-    (setq boogie-friends-profile-analyzer-executable "PATH-TO-Z3-AXIOM-PROFILER") ;; Optional
-    ```
+### Configuration
 
-    On GNU/Linux or MacOS, use the path to the `dafny` and `dafny-server` wrapper scripts for the first two.
+To get real-time checking in Boogie and Z3 files, use `(setq flycheck-boogie-executable "PATH-TO-BOOGIE")` and `(setq flycheck-z3-smt2-executable "PATH-TO-Z3")`.
+
+In Dafny files `M-x lsp` should be enough, but if you prefer a simpler setup use `(setq flycheck-dafny-executable "PATH-TO-dafny")` (on Windows use `Dafny.exe` instead of `dafny`).
+
+To use Z3's axiom profiler, use `(setq boogie-friends-profile-analyzer-executable "PATH-TO-Z3-AXIOM-PROFILER")`.
 
 ### Keybindings
 
