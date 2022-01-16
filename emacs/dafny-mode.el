@@ -482,7 +482,7 @@ open Dafny buffers."
 (defun dafny-error-filter (errs)
   (boogie-friends-cleanup-errors (flycheck-increment-error-columns errs)))
 
-(boogie-friends-def-exec dafny "Dafny.exe" "dafny")
+(boogie-friends-def-exec dafny dafny "Dafny.exe" "Dafny")
 
 (flycheck-define-command-checker 'dafny
   "Flycheck checker for the Dafny programming language."
