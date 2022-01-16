@@ -174,31 +174,111 @@ CLIENT and UPDATE? are ignored."
      lsp-dafny--verification-status
      (pcase status
        ("ParsingFailed"
-        (list nil "!" "Parsing error"))
+        '(failure "!" "Parsing error"))
        ("ResolutionFailed"
-        (list nil "!" "Resolution error"))
+        '(failure "!" "Resolution error"))
        ("CompilationSucceeded"
-        (list 'running ""))
-       ((and "VerificationInProgress" (guard message))
-        (list 'running (format "[%s…]" message) "Verification in progress"))
-       ((or "VerificationStarted" "VerificationInProgress")
-        (list 'running "…" "Verification started"))
+        '(running " " "Resolved but not verified yet"))
+       ("VerificationStarted"
+        (if message
+            `(running ,(format "[%s…]" message) "Verification in progress")
+          '(running "…" "Verification started")))
        ("VerificationFailed"
-        (list nil "✗" "Verification failed"))
+        '(failure "✗" "Verification failed"))
        ((or "VerificationSucceeded")
-        (list t "✓" "Verification succeeded"))
+        '(success "✓" "Verification succeeded"))
        (other
-        (list 'running other "Unknown status"))))
+        '(running ,other "Unknown status"))))
     (force-mode-line-update)))
 
 (defconst lsp-dafny--notification-handlers
   (map-into
    '(("serverStarted" . ignore)
      ("dafnyLanguageServerVersionReceived" . ignore)
+     ("dafny/ghost/diagnostics" . ignore)
      ("dafny/compilation/status" . lsp-dafny--handle-/compilation/status))
    'hash-table))
 
-;;;; Additional info
+;;;; Overrides
+
+(defun lsp-dafny-diagnostics--flycheck-start (checker callback)
+  "Start an LSP syntax check with CHECKER.
+
+CALLBACK is the status callback passed by Flycheck."
+
+  (remove-hook 'lsp-on-idle-hook #'lsp-diagnostics--flycheck-buffer t)
+
+  (->> (lsp--get-buffer-diagnostics)
+       (-mapcat
+        (-lambda ((&Diagnostic :message :severity? :tags? :code? :source? :related-information?
+                               :range (&Range :start (&Position :line      start-line
+                                                                :character start-character)
+                                              :end   (&Position :line      end-line
+                                                                :character end-character))))
+          (let ((group (gensym)))
+            (cons (flycheck-error-new
+                   :buffer (current-buffer)
+                   :checker checker
+                   :filename buffer-file-name
+                   :message message
+                   :level (lsp-diagnostics--flycheck-calculate-level severity? tags?)
+                   :id code?
+                   :group group
+                   :line (lsp-translate-line (1+ start-line))
+                   :column (1+ (lsp-translate-column start-character))
+                   :end-line (lsp-translate-line (1+ end-line))
+                   :end-column (1+ (lsp-translate-column end-character)))
+                  (-mapcat
+                   (-lambda ((&DiagnosticRelatedInformation
+                              :message
+                              :location
+                              (&Location :range (&Range :start (&Position :line      start-line
+                                                                          :character start-character)
+                                                        :end   (&Position :line      end-line
+                                                                          :character end-character))
+                                         :uri)))
+                     (and (equal (-> uri lsp--uri-to-path lsp--fix-path-casing)
+                                 (-> buffer-file-name lsp--fix-path-casing))
+                          `(,(flycheck-error-new
+                              :buffer (current-buffer)
+                              :checker checker
+                              :filename buffer-file-name
+                              :message message
+                              :level (lsp-diagnostics--flycheck-calculate-level (1+ severity?) tags?)
+                              :id code?
+                              :group group
+                              :line (lsp-translate-line (1+ start-line))
+                              :column (1+ (lsp-translate-column start-character))
+                              :end-line (lsp-translate-line (1+ end-line))
+                              :end-column (1+ (lsp-translate-column end-character))))))
+                   related-information?)))))
+       (funcall callback 'finished)))
+
+;;;; Logging
+
+;; (defcustom lsp-dafny-write-snapshots nil
+;;   "Whether to write snapshots of the current file to disk when verifying it.")
+
+;; (defun lsp-dafny--write-snapshot ()
+;;   "Write a snapshot of the current buffer to disk."
+;;   (let ((fname (format-time-string "%F-%H-%M-%S-%N.dfy")))
+;;     (write-region nil nil fname)))
+
+;; (defun lsp-dafny--maybe-write-snapshot ()
+;;   "Write a snapshot to disk if `lsp-dafny-write-snapshots' is set."
+;;   (when lsp-dafny-write-snapshots
+;;     (lsp-dafny--write-snapshot)))
+
+(defun lsp-dafny--log-io (message proc)
+  "Log MESSAGE sent to PROC."
+  (with-demoted-errors "Error in dafny--log-io: %S"
+    (when (derived-mode-p 'dafny-mode)
+      (let ((buf (format "*Dafny LSP IO: %s*" (process-id proc))))
+        (with-current-buffer (get-buffer-create buf)
+          (goto-char (point-max))
+          (insert message))))))
+
+;;;; Additional behaviors
 
 (defun lsp-dafny--on-change (&rest _args)
   "Reset verification progress."
@@ -207,18 +287,20 @@ CLIENT and UPDATE? are ignored."
 
 (defun lsp-dafny--mode-line-process-format ()
   "Compute text to display in Dafny's modeline."
-  (pcase lsp-dafny--verification-status
-    (`nil "")
-    (`(,status ,icon ,tooltip)
-     (let ((face (pcase status
-                   (`running 'compilation-mode-line-run)
-                   (`t 'compilation-mode-line-exit)
-                   (`nil 'compilation-mode-line-fail))))
-     (propertize (if (eq (length icon) 1)
-                     (compose-string icon 0 1 (concat "\t" icon "\t"))
-                   icon)
-                 'face `(bold ,face)
-                 'help-echo tooltip)))))
+  (pcase-let ((`(,status ,icon ,tooltip)
+               (or lsp-dafny--verification-status
+                   '(waiting " " "Verification not started"))))
+    (let ((face (pcase status
+                  (`waiting nil)
+                  (`running '(bold compilation-mode-line-run))
+                  (`success '(bold compilation-mode-line-exit))
+                  (`failure '(bold compilation-mode-line-fail)))))
+      (propertize (if (eq (length icon) 1)
+                      (compose-string icon 0 1 `[#x2003 (Bl . Bl) ,(aref icon 0)])
+                    ;;  '(concat "\t" icon "\t"))
+                    icon)
+                  'face face
+                  'help-echo tooltip))))
 
 (defconst lsp-dafny--mode-line-process
   '(:eval (lsp-dafny--mode-line-process-format)))
@@ -232,11 +314,16 @@ CLIENT and UPDATE? are ignored."
    (lsp-dafny--mode
     (make-local-variable 'mode-line-process)
     (add-hook 'after-change-functions #'lsp-dafny--on-change nil t)
+    (add-function :override
+                  (local 'lsp-diagnostics--flycheck-start)
+                  #'lsp-dafny-diagnostics--flycheck-start)
     (if mode-line-process
         (add-to-list 'mode-line-process 'lsp-dafny--mode-line-process t)
-      (setq mode-line-process `("" lsp-dafny--mode-line-process))))
+      (setq mode-line-process '("" lsp-dafny--mode-line-process))))
    (t
     (remove-hook 'after-change-functions #'lsp-dafny--on-change t)
+    (remove-function (local 'lsp-diagnostics--flycheck-start)
+                     #'lsp-dafny-diagnostics--flycheck-start)
     (setq-local mode-line-process
                 (delq 'lsp-dafny--mode-line-process mode-line-process)))))
 
