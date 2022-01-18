@@ -93,7 +93,10 @@
 (defvar dafny--flycheck-extra)
 (defvar dafny-verification-backend)
 
-(boogie-friends-def-exec dafny inferior-dafny "DafnyServer.exe" "DafnyServer")
+(boogie-friends-def-exec dafny inferior-dafny "DafnyServer")
+(defun flycheck-inferior-dafny-executable ()
+  "Return `flycheck-inferior-dafny-executable' or a default value."
+  (or flycheck-inferior-dafny-executable "DafnyServer"))
 
 (defvar inferior-dafny--in-memory nil
   "If non-nil, pass the buffer contents as part of queries to the server.
@@ -204,7 +207,7 @@ corresponding output buffer is created or recycled."
          (proc-name (inferior-dafny-process-name))
          (proc-buf (inferior-dafny-make-process-buffer))
          (proc (start-process proc-name proc-buf
-			      flycheck-inferior-dafny-executable)))
+			      (flycheck-inferior-dafny-executable))))
     (set-process-query-on-exit-flag proc nil)
     (set-process-coding-system proc 'utf-8 'utf-8)
     (set-process-filter proc #'inferior-dafny-filter)
@@ -514,7 +517,7 @@ If KILL-BUFFER is non-nil, get rid of its output buffer as well."
   "Send a self-test query to the server and check the output."
   (-when-let* ((output (ignore-errors
                          (process-lines
-                          flycheck-inferior-dafny-executable "-selftest")))
+                          (flycheck-inferior-dafny-executable) "-selftest")))
                (status-line (car-safe (last output))))
     (save-match-data
       (and (string-match inferior-dafny-server-eom-tag-regexp status-line)
@@ -536,8 +539,8 @@ by T-MESSAGE or NIL-MESSAGE."
 
 (defun inferior-dafny-healthcheck (&optional _checker)
   "Produce a health report for flycheck's :verify property."
-  (let* ((exec (and flycheck-inferior-dafny-executable
-                    (executable-find flycheck-inferior-dafny-executable)))
+  (let* ((exec (and (flycheck-inferior-dafny-executable)
+                    (executable-find (flycheck-inferior-dafny-executable))))
          (test (and exec (inferior-dafny-healthcheck-selftest))))
     (append
      (inferior-dafny-healthcheck-message

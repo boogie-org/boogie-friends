@@ -624,14 +624,11 @@ Uses `boogie-friends-mode-name' as the name of the checker."
       (message "Could not start checker for %s: '%s' not found. Please fix `flycheck-%s-executable'."
                (capitalize (boogie-friends-mode-name)) executable (boogie-friends-mode-name)))))
 
-(defmacro boogie-friends-def-exec (group name-symbol windows-binary unix-binary)
+(defmacro boogie-friends-def-exec (group name-symbol binary)
   "Define a Flycheck executable for NAME-SYMBOL in custom GROUP.
 Use WINDOWS-BINARY on Windows, and UNIX-BINARY elsewhere."
   `(progn
-     (flycheck-def-executable-var ,name-symbol
-       (if (memq system-type '(ms-dos windows-nt cygwin))
-           ,windows-binary
-         ,unix-binary))
+     (flycheck-def-executable-var ,name-symbol ,binary)
      (custom-add-to-group
       ',group
       ',(flycheck-checker-executable-variable name-symbol)

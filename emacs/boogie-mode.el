@@ -142,11 +142,11 @@ with a prefix arg."
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.bpl\\'" . boogie-mode))
 
-(boogie-friends-def-exec boogie boogie "Boogie.exe" "Boogie")
+(boogie-friends-def-exec boogie boogie "Boogie")
 
 (flycheck-define-command-checker 'boogie
   "Flycheck checker for the Boogie programming language."
-  :command '("boogie" (eval (boogie-friends-compute-prover-args)) source-inplace)
+  :command '("Boogie" (eval (boogie-friends-compute-prover-args)) source-inplace)
   :error-patterns boogie-friends-error-patterns
   :modes '(boogie-mode))
 

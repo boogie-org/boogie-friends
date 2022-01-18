@@ -482,11 +482,11 @@ open Dafny buffers."
 (defun dafny-error-filter (errs)
   (boogie-friends-cleanup-errors (flycheck-increment-error-columns errs)))
 
-(boogie-friends-def-exec dafny dafny "Dafny.exe" "Dafny")
+(boogie-friends-def-exec dafny dafny "Dafny")
 
 (flycheck-define-command-checker 'dafny
   "Flycheck checker for the Dafny programming language."
-  :command '("dafny" (eval (boogie-friends-compute-prover-args)) source-inplace)
+  :command '("Dafny" (eval (boogie-friends-compute-prover-args)) source-inplace)
   :error-patterns boogie-friends-error-patterns
   :error-filter #'dafny-error-filter
   :predicate #'dafny-predicate
