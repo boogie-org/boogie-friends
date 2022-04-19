@@ -380,7 +380,9 @@ open Dafny buffers."
   (boogie-friends-with-click event 'dafny-mode nil
     (-when-let* ((fun-name (thing-at-point 'word)))
       (occur-1 (concat "^" dafny-extended-defun-regexp "\\s-*\\<" (regexp-quote fun-name) "\\>") 3
-               (cl-loop for b being the buffers when (string-match-p "\\.dfy\\'" (buffer-name b)) collect b))
+               (cl-loop for b being the buffers
+                        when (string-match-p "\\.dfy\\'" (or (buffer-file-name b) (buffer-name b)))
+                        collect b))
       (-when-let* ((buf (get-buffer "*Occur*")))
         (with-current-buffer buf
           (face-remap-set-base 'match '(:weight bold :inverse-video t)))))))
