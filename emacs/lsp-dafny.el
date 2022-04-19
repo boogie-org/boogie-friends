@@ -319,13 +319,17 @@ CALLBACK is the status callback passed by Flycheck."
                   #'lsp-dafny-diagnostics--flycheck-start)
     (if mode-line-process
         (add-to-list 'mode-line-process 'lsp-dafny--mode-line-process t)
-      (setq mode-line-process '("" lsp-dafny--mode-line-process))))
+      (setq mode-line-process '("" lsp-dafny--mode-line-process)))
+    (setq-local company-backends
+                (cons #'company-capf (remove #'company-capf company-backends))))
    (t
     (remove-hook 'after-change-functions #'lsp-dafny--on-change t)
     (remove-function (local 'lsp-diagnostics--flycheck-start)
                      #'lsp-dafny-diagnostics--flycheck-start)
     (setq-local mode-line-process
-                (delq 'lsp-dafny--mode-line-process mode-line-process)))))
+                (delq 'lsp-dafny--mode-line-process mode-line-process))
+    (setq-local company-backends
+                (remove #'company-capf company-backends)))))
 
 (define-minor-mode lsp-dafny-trace-mode
   "Minor mode that records all queries to the server."
