@@ -45,6 +45,7 @@
                          (const "3.1.0")
                          (const "3.2.0")
                          (const "3.3.0")
+                         (const "3.4.0")
                          (string :tag "Other version"))
                  (const :tag "Find Dafny in your PATH" path)
                  (list :tag "Use a custom Dafny installation"
@@ -93,8 +94,7 @@ not nil."
        (err (user-error "Invalid `lsp-dafny-preferred-version': %S
 %S" v (cdr err)))))
      (`(,v)
-      (if (file-exists-p (car v))
-          (list v)
+      (if (file-exists-p v) (list v)
         (user-error "Invalid `lsp-dafny-preferred-version': %S
 Directory %s does not exist" v)))
      (_ (user-error "Invalid `lsp-dafny-preferred-version': %S"))))
