@@ -41,13 +41,13 @@
 (require 'inferior-dafny)
 
 (defconst dafny-defuns
-  '("class" "codatatype" "const" "constructor" "datatype" "export" "function"
+  '("class" "codatatype" "const" "constructor" "datatype" "function"
     "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
     "function method" "predicate method"
     "least predicate" "greatest predicate" "least lemma" "greatest lemma"))
 
 (defconst dafny-specifiers
-  '("decreases" "ensures" "invariant" "modifies" "provides" "reads" "reveals" "requires" "witness"))
+  '("decreases" "ensures" "export" "invariant" "modifies" "provides" "reads" "reveals" "requires" "witness"))
 
 (defconst dafny-modifiers '("abstract" "ghost" "nameonly" "static" "twostate"))
 
