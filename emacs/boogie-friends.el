@@ -123,7 +123,13 @@
 (defcustom boogie-friends-profiler-timeout 60
   "Timeout used when profiling.
 This value is read by `boogie-friends-profile', which see.  It
-must an whole number of seconds.")
+must an whole number of seconds."
+  :type 'integer)
+
+(defcustom boogie-friends-save-without-query nil
+  "Whether to save buffers without asking when compiling."
+  :type '(choice (const :tag "Do not ask before saving" t)
+                 (const :tag "Ask before saving" nil)))
 
 (defvar boogie-friends--prover-additional-args nil
   "Storage for extra prover arguments.
@@ -207,10 +213,13 @@ greedily (the opening bracket is matched by \\s_).")
           boogie-friends--prover-additional-args))
 
 (defun boogie-friends-save-or-error ()
-  (let ((buf (current-buffer)))
-    (save-some-buffers nil (lambda () (eq buf (current-buffer)))))
+  "Offer to save current buffer and raise an error if user refuses."
+  (if (and buffer-file-name boogie-friends-save-without-query)
+      (save-buffer)
+    (let ((buf (current-buffer)))
+      (save-some-buffers nil (lambda () (eq buf (current-buffer))))))
   (unless (and buffer-file-name (not (buffer-modified-p)))
-    (error "Please save your file before running this command.")))
+    (error "Please save your file before running this command")))
 
 (defun boogie-friends-compilation-buffer-namer (infix)
   (let ((name (format "*%s-%s-%s*" (boogie-friends-mode-name) infix buffer-file-name)))
