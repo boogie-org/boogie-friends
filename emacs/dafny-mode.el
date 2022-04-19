@@ -440,7 +440,8 @@ open Dafny buffers."
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (let ((re (concat "^" dafny-extended-defun-regexp "\\>")))
+    (let ((case-fold-search nil)
+          (re (concat "^" dafny-extended-defun-regexp "\\>")))
       (while (re-search-forward re nil t)
         (replace-match "\\& {:verify false}" t)))))
 
@@ -448,7 +449,8 @@ open Dafny buffers."
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (let ((re (concat "^\\(" dafny-extended-defun-regexp "\\>\\)\\s-*{:verify\\s-*\\(?:true\\|false\\)\\s-*}")))
+    (let ((case-fold-search nil)
+          (re (concat "^\\(" dafny-extended-defun-regexp "\\>\\)\\s-*{:verify\\s-*\\(?:true\\|false\\)\\s-*}")))
       (while (re-search-forward re nil t)
         (replace-match "\\1")))))
 
