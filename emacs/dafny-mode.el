@@ -228,6 +228,9 @@ Useful to ignore mouse-up events handled mouse-down events."
   (let ((tbl (make-syntax-table)))
     (modify-syntax-entry ?'  "w" tbl)
     (modify-syntax-entry ?_  "w" tbl)
+    ;;
+    (modify-syntax-entry ?<  "." tbl)
+    (modify-syntax-entry ?>  "." tbl)
     ;; Comments
     (modify-syntax-entry ?\n ">" tbl)
     (modify-syntax-entry ?/  ". 124" tbl)
