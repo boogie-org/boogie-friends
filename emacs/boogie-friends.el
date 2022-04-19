@@ -148,16 +148,28 @@ Use this hook to alter settings common to Dafny and Boogie, such
 as prettification.")
 
 (defconst boogie-friends-trace-header-regexp
-  "^Verifying\\s-*\\([^ ]+\\)\\s-*\\.\\.\\."
+  "^Verifying\\s-*\\([^[:space:]]+\\) *\\.\\.\\.\\(?:$\\)" ;; \\(?:$\\) needed by trace-entry-regexp
   "Header part of `boogie-friends-trace-entry-regexp'.")
 
+(defconst boogie-friends-trace-timing-regexp
+  "\\(?:^\\)  \\[\\(\\([^[:space:]]+\\) *s\\), \\(?:solver resource count: \\([0-9]+\\),\\)? \\([0-9]+\\) proof obligations\\] *\\([^[:space:]*]*\\)$"
+  ;; \\(?:^\\) needed by trace-entry-regexp
+  "Timing part of `boogie-friends-trace-entry-regexp'.")
+
 (defconst boogie-friends-trace-entry-regexp
-  (concat boogie-friends-trace-header-regexp
-          "\\s-*\\[\\(\\([^ ]+\\)\\s-+s\\),.*\\]")
+  (format "%s\\s-*%s"
+          boogie-friends-trace-header-regexp
+          boogie-friends-trace-timing-regexp)
   "Regexp used to locate useful timings from a Boogie trace.")
 
 (defconst boogie-friends-trace-entry-spec
-  (list boogie-friends-trace-entry-regexp '(1 font-lock-function-name-face) '(2 font-lock-constant-face))
+  `((,boogie-friends-trace-header-regexp
+     (1 font-lock-function-name-face))
+    (,boogie-friends-trace-timing-regexp
+     (2 font-lock-constant-face)
+     (3 font-lock-constant-face)
+     (4 font-lock-constant-face)
+     (5 bold)))
   "Font-lock keyword spec to highlight `boogie-friends-trace-entry-regexp'.")
 
 (defconst boogie-friends-font-lock-var "\\_<\\(\\sw\\(?:\\sw\\|\\s_\\)*\\)\\_>"
@@ -282,7 +294,7 @@ With prefix USE-ALTERNATE, run the checker with alternate args."
                (compilation-buffer (boogie-friends--compile trace-args (consp use-alternate) "trace"))
                (trace-parser (boogie-friends-make-trace-callback (current-buffer) compilation-buffer)))
     (with-current-buffer compilation-buffer
-      (font-lock-add-keywords nil (list boogie-friends-trace-entry-spec))
+      (font-lock-add-keywords nil boogie-friends-trace-entry-spec)
       (add-hook 'compilation-finish-functions trace-parser nil t))))
 
 (defun boogie-friends-ensure-buffer-ro (buffer-fname)
