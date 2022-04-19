@@ -115,7 +115,7 @@ One of `cli', `server', or nil.
                 (const :tag "None" nil))
   :group 'dafny)
 
-(defcustom dafny-prover-args '("/compile:0")
+(defcustom dafny-prover-args '("/compile:0" "/showSnippets:1")
   "Arguments to pass to Dafny when checking a file.
 The name of the file itself is added last.  You can override all
 arguments here, or use `dafny-prover-custom-args' to add just a
