@@ -127,7 +127,7 @@ few extra flags in addition to the default ones."
 These come in addition to `dafny-prover-args'."
   :group 'dafny)
 
-(defcustom dafny-prover-background-args '("/timeLimit:20" "/autoTriggers:1" "/printTooltips")
+(defcustom dafny-prover-background-args '("/timeLimit:10" "/printTooltips")
   "Extra arguments to pass to Dafny for background verification.
 These come in addition to `dafny-prover-args' and
 `dafny-prover-custom-args'."
