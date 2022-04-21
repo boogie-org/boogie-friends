@@ -43,8 +43,9 @@
 (defconst dafny-defuns
   '("class" "codatatype" "const" "constructor" "datatype" "function"
     "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
-    "function method" "predicate method"
-    "least predicate" "greatest predicate" "least lemma" "greatest lemma"))
+    ;; "function method" "predicate method"
+    ;;"least predicate" "greatest predicate" "least lemma" "greatest lemma"
+    ))
 
 (defconst dafny-specifiers
   '("decreases" "ensures" "export" "invariant" "modifies" "provides" "reads" "reveals" "requires" "witness"))
@@ -54,7 +55,7 @@
 (defconst dafny-builtins '("extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
 
 (defconst dafny-keywords
-  '("allocated" "as" "assert" "assume" "break" "by" "calc" "case" "downto" "else" "exists" "expect" "false"
+  '("allocated" "as" "assert" "assume" "break" "by" "calc" "case" "continue" "downto" "else" "exists" "expect" "false"
     "for" "forall" "fresh" "if" "in" "is" "label" "match" "modify" "new" "null" "old"
     "print" "return" "reveal" "then" "this" "to" "true" "unchanged" "var"
     "while" "yield"))
@@ -115,7 +116,7 @@ One of `cli', `server', or nil.
                 (const :tag "None" nil))
   :group 'dafny)
 
-(defcustom dafny-prover-args '("/compile:0")
+(defcustom dafny-prover-args '("/errorTrace:0" "/compile:0" "/warnShadowing" "/warningsAsErrors" "/vcsLoad:1" "/definiteAssignment:3")
   "Arguments to pass to Dafny when checking a file.
 The name of the file itself is added last.  You can override all
 arguments here, or use `dafny-prover-custom-args' to add just a
@@ -453,7 +454,8 @@ open Dafny buffers."
 (defun dafny-defun-name-at-point()
   (re-search-backward dafny-extended-defun-regexp nil t)
   (re-search-forward dafny-extended-defun-regexp nil t)
-  (re-search-forward "[[:word:]]" nil t)
+  ;; skip over annotations like {: vcs_split_on_every_assert }
+  (re-search-forward "[ }]? [[:word:]]" nil t)
   (backward-char)
   (let* ((beg (point))
          (_ (forward-word))
