@@ -89,6 +89,7 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `â
 #### All modes
 
 * <kbd>C-c C-c</kbd> re-verifies the current file. With a prefix argument (<kbd>C-u C-c C-c</kbd>), extra arguments are sent to the verifier (by default `/trace`).
+* <kbd>C-c C-v</kbd> verifies the "defun" (i.e. function/method/class/etc) at point.
 * <kbd>S-TAB</kbd> manually cycles through reasonable indentation levels.
 
 #### Dafny and Boogie

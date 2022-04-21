@@ -216,6 +216,7 @@ Useful to ignore mouse-up events handled mouse-down events."
     (define-key map (kbd "C-c C-a") 'boogie-friends-translate)
     (define-key map (kbd "C-c C-b") 'dafny-insert-attribute)
     (define-key map (kbd "C-c C-j") 'dafny-jump-to-boogie)
+    (define-key map (kbd "C-c C-v") 'dafny-verify-at-point)
     (define-key map (kbd "C-c C-?") 'dafny-docs-open) ;; TODO enable by default?
     (define-key map (kbd "<C-mouse-1>") 'dafny-ignore-event)
     (define-key map (kbd "<C-S-mouse-1>") 'dafny-ignore-event)
@@ -448,6 +449,25 @@ open Dafny buffers."
     (let ((re (concat "^\\(" dafny-extended-defun-regexp "\\>\\)\\s-*{:verify\\s-*\\(?:true\\|false\\)\\s-*}")))
       (while (re-search-forward re nil t)
         (replace-match "\\1")))))
+
+(defun dafny-defun-name-at-point()
+  (re-search-backward dafny-extended-defun-regexp nil t)
+  (re-search-forward dafny-extended-defun-regexp nil t)
+  (re-search-forward "[[:word:]]" nil t)
+  (backward-char)
+  (let* ((beg (point))
+         (_ (forward-word))
+         (end (point)))
+    (buffer-substring beg end)))
+
+(defun dafny-verify-at-point()
+  (interactive)
+  (save-excursion
+    (let* ((id (dafny-defun-name-at-point))
+           (pattern (concat "*" id "*"))
+           (arg (concat "/proc:" pattern)))
+      (boogie-friends--compile (list arg) (consp arg) "verification"))
+      ))
 
 (defun dafny-attribute-prefix ()
   (when (save-excursion (skip-syntax-backward "w_")
