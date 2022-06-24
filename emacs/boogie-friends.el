@@ -362,8 +362,8 @@ Throws if a counter-example is found."
 Used by `boogie-friends-trace', which see. If NO-TIMEOUT is
 non-nil, each method is restricted to
 `boogie-friends-profiler-timeout' seconds."
-  (append (list "/z3opt:TRACE=true" "/trace")
-          (when log-path (list (format "/z3opt:TRACE_FILE_NAME=\"%s\"" log-path)))
+  (append (list "/proverOpt:TRACE=true" "/trace")
+          (when log-path (list (format "/proverOpt:TRACE_FILE_NAME=\"%s\"" log-path)))
           (when (stringp proc) (list (format "/proc:%s" proc)))
           (boogie-friends-get-timeout-arg)))
 
