@@ -251,7 +251,9 @@ tracing.  Returns the compile buffer."
     (unless (flycheck-may-use-checker checker)
       (user-error "Prover %s is improperly configured" checker))
     (let* ((custom-args (and use-alternate (boogie-friends-mode-val 'prover-alternate-args)))
-           (boogie-friends--prover-additional-args (append custom-args additional-arguments))
+           (compilation-args (boogie-friends-mode-val 'prover-foreground-args))
+           (boogie-friends--prover-additional-args
+            (append compilation-args custom-args additional-arguments))
            (command (flycheck-checker-shell-command checker))
            (buffer (compilation-start command nil (boogie-friends-compilation-buffer-namer name))))
       (with-current-buffer buffer

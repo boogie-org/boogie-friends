@@ -63,11 +63,18 @@ few extra flags in addition to the default ones."
 These come in addition to `boogie-prover-args'."
   :group 'boogie)
 
+(defcustom boogie-prover-foreground-args '("/timeLimit:30")
+  "Extra arguments to pass to Boogie for compilation.
+These come in addition to `boogie-prover-args' and
+`boogie-prover-custom-args' and are used when manually launching
+verification (\\[boogie-friends-verify])."
+  :group 'boogie)
+
 (defcustom boogie-prover-background-args '()
   "Extra arguments to pass to Boogie for background verification.
 These come in addition to `boogie-prover-args' and
 `boogie-prover-custom-args'."
-  :group 'dafny)
+  :group 'boogie)
 
 (defcustom boogie-prover-local-args '()
   "Extra arguments to pass to Boogie when checking a file.

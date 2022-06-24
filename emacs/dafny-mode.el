@@ -115,7 +115,7 @@ One of `cli', `server', or nil.
                 (const :tag "None" nil))
   :group 'dafny)
 
-(defcustom dafny-prover-args '("/compile:0" "/showSnippets:1")
+(defcustom dafny-prover-args '("/compile:0")
   "Arguments to pass to Dafny when checking a file.
 The name of the file itself is added last.  You can override all
 arguments here, or use `dafny-prover-custom-args' to add just a
@@ -125,6 +125,13 @@ few extra flags in addition to the default ones."
 (defcustom dafny-prover-custom-args '()
   "Extra arguments to pass to Dafny.
 These come in addition to `dafny-prover-args'."
+  :group 'dafny)
+
+(defcustom dafny-prover-foreground-args '("/useBaseNameForFileName" "/timeLimit:30" "/vcsCores:4" "/showSnippets:1")
+  "Extra arguments to pass to Dafny for compilation.
+These come in addition to `dafny-prover-args' and
+`dafny-prover-custom-args' and are used when manually launching
+verification (\\[boogie-friends-verify])."
   :group 'dafny)
 
 (defcustom dafny-prover-background-args '("/timeLimit:10" "/printTooltips")
@@ -141,7 +148,7 @@ These come in addition to `dafny-prover-args' and
 
 (defcustom dafny-prover-alternate-args '("/compile:3")
   "Extra arguments to pass to Dafny when compiling with a prefix arg.
-Added to `dafny-prover-basic-args', `dafny-prover-local-args',
+Added to `dafny-prover-args', `dafny-prover-local-args',
 and `dafny-prover-custom-args' when manually launching
 verification (\\[boogie-friends-verify]) with a prefix arg."
   :group 'dafny)
