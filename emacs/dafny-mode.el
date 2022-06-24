@@ -283,7 +283,11 @@ Useful to ignore mouse-up events handled mouse-down events."
   "Indent current line."
   (interactive)
   (beginning-of-line)
-  (let* ((pprev-type  (car-safe (save-excursion (and (boogie-friends-backward-line) (boogie-friends-backward-line) (dafny-line-props)))))
+  (let* ((case-fold-search nil)
+         (pprev-type  (car-safe (save-excursion
+                                  (and (boogie-friends-backward-line)
+                                       (boogie-friends-backward-line)
+                                       (dafny-line-props)))))
          (prev-props  (save-excursion (and (boogie-friends-backward-line) (dafny-line-props))))
          (prev-type   (car-safe prev-props))
          (prev-offset (or (cdr-safe prev-props) 0))
