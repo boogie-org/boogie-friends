@@ -43,7 +43,7 @@
 (defconst dafny-defuns
   '("class" "codatatype" "const" "constructor" "datatype" "function"
     "iterator" "lemma" "method" "newtype" "predicate" "trait" "type"
-    "function method" "predicate method"
+    "function method" "predicate method" "module"
     "least predicate" "greatest predicate" "least lemma" "greatest lemma"))
 
 (defconst dafny-specifiers
@@ -51,7 +51,7 @@
 
 (defconst dafny-modifiers '("abstract" "ghost" "nameonly" "static" "twostate"))
 
-(defconst dafny-builtins '("extends" "import" "include" "module" "opened" "refines" "returns" "yields"))
+(defconst dafny-builtins '("extends" "import" "include" "opened" "refines" "returns" "yields"))
 
 (defconst dafny-keywords
   '("allocated" "as" "assert" "assume" "break" "by" "calc" "case" "downto" "else" "exists" "expect" "false"
