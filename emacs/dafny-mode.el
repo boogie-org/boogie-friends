@@ -54,10 +54,13 @@
 (defconst dafny-builtins '("extends" "import" "include" "opened" "refines" "returns" "yields"))
 
 (defconst dafny-keywords
-  '("allocated" "as" "assert" "assume" "break" "by" "calc" "case" "downto" "else" "exists" "expect" "false"
+  '("allocated" "as" "assert" "break" "by" "calc" "case" "downto" "else" "exists" "expect" "false"
     "for" "forall" "fresh" "if" "in" "is" "label" "match" "modify" "new" "null" "old"
     "print" "return" "reveal" "then" "this" "to" "true" "unchanged" "var"
     "while" "yield"))
+
+(defconst dafny-dangerous
+  '("assume")) ;; :axiom is handled separately below
 
 (defconst dafny-types '("array" "array?" "array2" "array2?" "array3" "array3?"
                         "bool"
@@ -69,15 +72,19 @@
 
 (defconst dafny-block-heads '("calc" "else" "if" "match" "while"))
 
-(defconst dafny-all-keywords (cl-loop for source in '(dafny-defuns dafny-specifiers dafny-modifiers
-                                                      dafny-builtins dafny-keywords dafny-types)
-                                      append (mapcar (lambda (kwd) (propertize kwd 'source source)) (symbol-value source))))
+(defconst dafny-all-keywords
+  (cl-loop for source in '( dafny-defuns dafny-specifiers dafny-modifiers
+                            dafny-builtins dafny-keywords dafny-dangerous
+                            dafny-types)
+           append (mapcar (lambda (kwd) (propertize kwd 'source source))
+                          (symbol-value source))))
 
 (defconst dafny-defuns-regexp     (regexp-opt dafny-defuns 'symbols))
 (defconst dafny-specifiers-regexp (regexp-opt dafny-specifiers 'symbols))
 (defconst dafny-modifiers-regexp  (regexp-opt dafny-modifiers 'symbols))
 (defconst dafny-builtins-regexp   (regexp-opt dafny-builtins 'symbols))
 (defconst dafny-keywords-regexp   (regexp-opt dafny-keywords 'symbols))
+(defconst dafny-dangerous-regexp  (regexp-opt dafny-dangerous 'symbols))
 (defconst dafny-types-regexp      (regexp-opt dafny-types 'symbols))
 
 (defconst dafny-extended-defun-regexp (concat "\\s-*\\(" dafny-modifiers-regexp "\\)*\\s-*" dafny-defuns-regexp))
@@ -191,6 +198,14 @@ the return value."
   (interactive '(t t))
   (dafny-load-snippets-collection dafny-attributes-repo 'dafny-attributes force-reload interactive))
 
+(defface dafny-dangerous-face
+  '((t . ( :box (:line-width -1 :color "#ef2929" :style nil)
+            :background "#cc0000"
+            :foreground "#eeeeec"
+            :weight bold
+            :inherit font-lock-warning-face)))
+  "Face for unsafe keywords.")
+
 (defconst dafny-font-lock-keywords ;; FIXME type constraints
   (list
    (list #'boogie-friends-mark-font-lock-assignment-chain
@@ -205,6 +220,8 @@ the return value."
    (cons dafny-builtins-regexp font-lock-builtin-face)
    (cons "!\\_<in\\_>" font-lock-keyword-face) ;; Needed because '!' is not part of a symbol, so adding '!in' to keywords doesn't work
    (cons dafny-keywords-regexp font-lock-keyword-face)
+   `(,dafny-dangerous-regexp . 'dafny-dangerous-face)
+   `("{\\(:axiom\\)}" 1 'dafny-dangerous-face)
    (cons dafny-types-regexp font-lock-type-face)
    (list "\\(!\\)\\([^=i!]\\|$\\)" 1 font-lock-negation-char-face)
    (list "\\(\\_<forall\\_>\\).*?::"
