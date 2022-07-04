@@ -278,7 +278,7 @@ when post-processing errors.")
       (append-to-file query nil inferior-dafny--transcript-name))))
 
 (defun inferior-dafny-verify (_checker callback)
-  "Issue a 'verify' query to the server, returning immediately.
+  "Issue a `verify' query to the server, returning immediately.
 
 _CHECKER is ignored.  CALLBACK should be a function of two
 arguments STATUS and DATA, as described in the docs of
