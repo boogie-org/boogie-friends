@@ -29,7 +29,7 @@
 
 ;;;;; Installation options
 
-(defconst lsp-dafny-latest-known-version "3.3.0")
+(defconst lsp-dafny-latest-known-version "3.9.0")
 
 (defun lsp-dafny--version-safe-p (vernum)
   "Check whether VERNUM is a safe value for `lsp-dafny-preferred-version'."
@@ -41,11 +41,22 @@
   :safe #'lsp-dafny--version-safe-p
   :type '(choice (const :tag "Auto-install the latest version" nil)
                  (choice :tag "Auto-install a specific version"
-                         (const "3.0.0")
-                         (const "3.1.0")
-                         (const "3.2.0")
-                         (const "3.3.0")
+                         (const "3.9.0")
+                         (const "3.8.1")
+                         (const "3.8.0")
+                         (const "3.7.3")
+                         (const "3.7.2")
+                         (const "3.7.1")
+                         (const "3.7.0")
+                         (const "3.6.0")
+                         (const "3.5.0")
+                         (const "3.4.2")
+                         (const "3.4.1")
                          (const "3.4.0")
+                         (const "3.3.0")
+                         (const "3.2.0")
+                         (const "3.1.0")
+                         (const "3.0.0")
                          (string :tag "Other version"))
                  (const :tag "Find Dafny in your PATH" path)
                  (list :tag "Use a custom Dafny installation"
