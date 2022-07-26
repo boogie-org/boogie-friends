@@ -196,6 +196,8 @@ CLIENT and UPDATE? are ignored."
    '(("serverStarted" . ignore)
      ("dafnyLanguageServerVersionReceived" . ignore)
      ("dafny/ghost/diagnostics" . ignore)
+     ("dafny/verification/status/gutter" . ignore)
+     ("dafny/textDocument/symbolStatus" . ignore)
      ("dafny/compilation/status" . lsp-dafny--handle-/compilation/status))
    'hash-table))
 
