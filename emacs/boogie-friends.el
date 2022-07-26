@@ -299,12 +299,12 @@ With prefix USE-ALTERNATE, run the checker with alternate args."
       (font-lock-add-keywords nil boogie-friends-trace-entry-spec)
       (add-hook 'compilation-finish-functions trace-parser nil t))))
 
-(defun boogie-friends-ensure-buffer-ro (buffer-fname)
-  "Ensures that any buffer visiting VUFFER-FNAME is readonly.
+(defun boogie-friends-ensure-buffer-clean (buffer-fname)
+  "Ensure that any buffer visiting BUFFER-FNAME is read-only or unmodified.
 Throws if a counter-example is found."
   (-when-let* ((visiting-buffer (find-buffer-visiting buffer-fname)))
     (with-current-buffer visiting-buffer
-      (unless buffer-read-only
+      (when (and (not buffer-read-only) (buffer-modified-p))
         (error "Buffer %s is modified and already visiting %s; cowardly refusing to overwrite" (buffer-name) buffer-fname))))
   t)
 
@@ -347,7 +347,7 @@ Throws if a counter-example is found."
   (interactive "P")
   (boogie-friends-save-or-error)
   (-when-let* ((translated-fname (boogie-friends-translated-fname))
-               (refuse-overwriting (boogie-friends-ensure-buffer-ro translated-fname))
+               (refuse-overwriting (boogie-friends-ensure-buffer-clean translated-fname))
                (translate-args-f (boogie-friends-mode-var 'translation-prover-args-fn))
                (translated-args (and (functionp translate-args-f) (funcall translate-args-f translated-fname)))
                (compilation-buffer (boogie-friends--compile translated-args use-alternate "translate"))
