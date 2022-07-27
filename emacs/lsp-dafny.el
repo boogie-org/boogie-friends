@@ -17,9 +17,11 @@
 
 (require 'lsp-mode)
 (require 'lsp-protocol)
+(require 'lsp-diagnostics)
+(require 'company-capf)
 (require 'boogie-friends)
 
-;;;; Customization
+;;; Customization
 
 (defgroup lsp-dafny nil
   "Options for dafny-mode's LSP support."
@@ -27,7 +29,7 @@
   :prefix "lsp-dafny"
   :link '(url-link "https://github.com/dafny-lang/dafny/"))
 
-;;;;; Installation options
+;;;; Installation options
 
 (defconst lsp-dafny-latest-known-version "3.9.0")
 
@@ -68,7 +70,7 @@
   :risky t
   :type 'directory)
 
-;;;;; Server options
+;;;; Server options
 
 (defcustom lsp-dafny-server-automatic-verification-policy 'onchange
   "When to verify Dafny code."
@@ -87,6 +89,37 @@
   "Dafny language server arguments."
   :risky t
   :type '(repeat string))
+
+;;;; Faces
+
+(defface lsp-dafny-counterexample-border
+  '((((class color) (min-colors 88))
+     :background "grey65" :weight bold :extend t)
+    (t :inverse-video t :extend t))
+  "Face used for counterexample borders.")
+
+(defface lsp-dafny-counterexample-separator
+  '((t :extend t))
+  "Face used for counterexample separators.")
+
+(defface lsp-dafny-counterexample-inset
+  '((((class color) (min-colors 88) (background light))
+     :background "grey90" :height 0.8 :extend t)
+    (((class color) (min-colors 88) (background dark))
+     :background "grey30" :height 0.8 :extend t)
+    (t :slant italic :extend t))
+  "Face used for counterexample insets.")
+
+;;; Macros
+
+(defmacro lsp-dafny--with-whole-buffer-unmodified (&rest body)
+  "Run BODY on the whole buffer without tracking changes or position."
+  (declare (debug t) (indent 0))
+  `(with-silent-modifications
+     (save-excursion
+       (save-restriction
+         (widen)
+         ,@body))))
 
 ;;; LSP setup
 
@@ -171,101 +204,306 @@ CLIENT and UPDATE? are ignored."
      :store-path dl-dir
      :decompress :zip)))
 
+;;;; Overrides
+
+(defun lsp-dafny-diagnostics--flycheck-calculate-level (severity tags)
+  "Return `tooltip' if SEVERITY is 4, nil otherwise.
+TAGS are ignored."
+  (ignore tags)
+  (and (bound-and-true-p lsp-dafny--mode)
+       (equal severity 4)
+       'tooltip))
+
+
+;;; Additional behaviors
+
+;;;; Minor mode
+
+(defconst lsp-dafny-modules
+  `(lsp-dafny-counterexamples-module
+    lsp-dafny-mode-line-status-module
+    lsp-dafny-company-module
+    lsp-dafny-flycheck-module
+    lsp-dafny-trace-module))
+
+(defconst lsp-dafny-disabled-modules
+  `(lsp-dafny-trace-module))
+
+(defun lsp-dafny-enabled-modules ()
+  "Collect all enabled LSP-Dafny modules."
+  (cons 'lsp-dafny-hooks-module
+        (cl-set-difference lsp-dafny-modules
+                           lsp-dafny-disabled-modules)))
+
+(defun lsp-dafny--toggle-modules (command)
+  "Run all LSP Dafny modules with COMMAND."
+  (dolist (mod (lsp-dafny-enabled-modules))
+    (funcall mod command)))
+
+(define-minor-mode lsp-dafny--mode
+  "Minor mode to manage LSP-Dafny features."
+  :init-value nil
+  (lsp-dafny--toggle-modules (if lsp-dafny--mode 'on 'off)))
+
+(defun lsp-dafny-teardown ()
+  "Deactivate all LSP Dafny features."
+  (lsp-dafny--mode -1))
+
+;;;; Hooks
+
+(defun lsp-dafny-hooks-module (command)
+  "Set up Dafny LSP hooks according to COMMAND."
+  (pcase command
+    (`on
+     (add-hook 'change-major-mode-hook #'lsp-dafny-teardown nil t)
+     (add-hook 'before-revert-hook #'lsp-dafny-teardown nil t)
+     (add-hook 'kill-buffer-hook #'lsp-dafny-teardown nil t))
+    (`off
+     (remove-hook 'change-major-mode-hook #'lsp-dafny-teardown t)
+     (remove-hook 'before-revert-hook #'lsp-dafny-teardown t)
+     (remove-hook 'kill-buffer-hook #'lsp-dafny-teardown t))))
+
+;;;; Company setup
+
+(defun lsp-dafny-company-module (command)
+  "Set up company for use with Dafny LSP according to COMMAND."
+  (pcase command
+    (`on
+     (setq-local company-backends
+                 (cons #'company-capf
+                       (remove #'company-capf company-backends))))
+    (`off
+     (setq-local company-backends
+                 (remove #'company-capf company-backends)))))
+
+;;;; Flycheck setup
+
+(defun lsp-dafny-flycheck-module (command)
+  "Set up Flycheck for use with Dafny LSP according to COMMAND."
+  (pcase command
+    (`on
+     (advice-add #'lsp-diagnostics--flycheck-calculate-level
+                 :before-until #'lsp-dafny-diagnostics--flycheck-calculate-level))
+    (`off
+     (advice-remove #'lsp-diagnostics--flycheck-calculate-level
+                    #'lsp-dafny-diagnostics--flycheck-calculate-level))))
+
 ;;;; Custom notifications
 
 (lsp-interface (dafny:compilation/progress (:uri :status :message)))
 
 (defvar-local lsp-dafny--verification-status nil)
 
-(lsp-defun lsp-dafny--handle-/compilation/status
-    (_workspace (&dafny:compilation/progress :uri :status :message))
+(defvar lsp-dafny--verification-status-changed-hook ()
+  "Hook run when Dafny's verification status changes.")
+
+(defun lsp-dafny--handle-/compilation/status (_workspace msg)
   "Handle the dafny/compilation/status notification MSG."
-  (with-current-buffer (-> uri lsp--uri-to-path find-file-noselect)
-    (setq-local
-     lsp-dafny--verification-status
-     (pcase status
-       ("ParsingFailed"
-        '(failure "!" "Parsing error"))
-       ("ResolutionFailed"
-        '(failure "!" "Resolution error"))
-       ("CompilationSucceeded"
-        '(running " " "Resolved but not verified yet"))
-       ("VerificationStarted"
-        (if message
-            `(running ,(format "[%s…]" message) "Verification in progress")
-          '(running "…" "Verification started")))
-       ("VerificationFailed"
-        '(failure "✗" "Verification failed"))
-       ((or "VerificationSucceeded")
-        '(success "✓" "Verification succeeded"))
-       (other
-        '(running ,other "Unknown status"))))
-    (force-mode-line-update)))
+  (pcase-let (((dafny:compilation/progress :uri :status :message) msg))
+    (with-current-buffer (-> uri lsp--uri-to-path find-file-noselect)
+      (setq-local
+       lsp-dafny--verification-status
+       (pcase status
+         ("ParsingFailed"
+          '(failure "!" "Parsing error"))
+         ("ResolutionFailed"
+          '(failure "!" "Resolution error"))
+         ("ResolutionStarted"
+          '(running " " "Resolution in progress"))
+         ("CompilationSucceeded"
+          '(running " " "Resolved but not verified yet"))
+         ("VerificationStarted"
+          (if message
+              `(running ,(format "[%s…]" message) "Verification in progress")
+            '(running "…" "Verification started")))
+         ("VerificationFailed"
+          '(failure "✗" "Verification failed"))
+         ((or "VerificationSucceeded")
+          '(success "✓" "Verification succeeded"))
+         (other
+          `(running ,other (format "Unknown status (%S)" other)))))
+      (run-hook-with-args 'lsp-dafny--verification-status-changed-hook))))
 
-(defconst lsp-dafny--notification-handlers
-  (map-into
-   '(("serverStarted" . ignore)
-     ("dafnyLanguageServerVersionReceived" . ignore)
-     ("dafny/ghost/diagnostics" . ignore)
-     ("dafny/verification/status/gutter" . ignore)
-     ("dafny/textDocument/symbolStatus" . ignore)
-     ("dafny/compilation/status" . lsp-dafny--handle-/compilation/status))
-   'hash-table))
+;;;; Modeline progress indicator
 
-;;;; Overrides
+(defun lsp-dafny--mode-line-on-change (&rest _args)
+  "Reset verification progress."
+  (when lsp-dafny--verification-status
+    (setq lsp-dafny--verification-status nil)
+    (run-hook-with-args 'lsp-dafny--verification-status-changed-hook)))
 
-(defun lsp-dafny-diagnostics--flycheck-start (checker callback)
-  "Start an LSP syntax check with CHECKER.
+(defun lsp-dafny--mode-line-update ()
+  "Force a mode line update."
+  (force-mode-line-update))
 
-CALLBACK is the status callback passed by Flycheck."
+(defun lsp-dafny--mode-line-process-format ()
+  "Compute text to display in Dafny's mode-line."
+  (pcase-let ((`(,status ,icon ,tooltip)
+               (or lsp-dafny--verification-status
+                   '(waiting " " "Verification not started"))))
+    (let ((face (pcase status
+                  (`waiting nil)
+                  (`running '(bold compilation-mode-line-run))
+                  (`success '(bold compilation-mode-line-exit))
+                  (`failure '(bold compilation-mode-line-fail)))))
+      (propertize (if (eq (length icon) 1)
+                      (compose-string icon 0 1 `[#x2003 (Bl . Bl) ,(aref icon 0)])
+                    ;; '(concat "\t" icon "\t"))
+                    icon)
+                  'face face
+                  'help-echo tooltip))))
 
-  (remove-hook 'lsp-on-idle-hook #'lsp-diagnostics--flycheck-buffer t)
+(defconst lsp-dafny--mode-line-process
+  '(:eval (lsp-dafny--mode-line-process-format)))
+(put 'lsp-dafny--mode-line-process 'risky-local-variable t)
 
-  (->> (lsp--get-buffer-diagnostics)
-       (-mapcat
-        (-lambda ((&Diagnostic :message :severity? :tags? :code? :source? :related-information?
-                               :range (&Range :start (&Position :line      start-line
-                                                                :character start-character)
-                                              :end   (&Position :line      end-line
-                                                                :character end-character))))
-          (let ((group (gensym)))
-            (cons (flycheck-error-new
-                   :buffer (current-buffer)
-                   :checker checker
-                   :filename buffer-file-name
-                   :message message
-                   :level (lsp-diagnostics--flycheck-calculate-level severity? tags?)
-                   :id code?
-                   :group group
-                   :line (lsp-translate-line (1+ start-line))
-                   :column (1+ (lsp-translate-column start-character))
-                   :end-line (lsp-translate-line (1+ end-line))
-                   :end-column (1+ (lsp-translate-column end-character)))
-                  (-mapcat
-                   (-lambda ((&DiagnosticRelatedInformation
-                              :message
-                              :location
-                              (&Location :range (&Range :start (&Position :line      start-line
-                                                                          :character start-character)
-                                                        :end   (&Position :line      end-line
-                                                                          :character end-character))
-                                         :uri)))
-                     (and (equal (-> uri lsp--uri-to-path lsp--fix-path-casing)
-                                 (-> buffer-file-name lsp--fix-path-casing))
-                          `(,(flycheck-error-new
-                              :buffer (current-buffer)
-                              :checker checker
-                              :filename buffer-file-name
-                              :message message
-                              :level (lsp-diagnostics--flycheck-calculate-level (1+ severity?) tags?)
-                              :id code?
-                              :group group
-                              :line (lsp-translate-line (1+ start-line))
-                              :column (1+ (lsp-translate-column start-character))
-                              :end-line (lsp-translate-line (1+ end-line))
-                              :end-column (1+ (lsp-translate-column end-character))))))
-                   related-information?)))))
-       (funcall callback 'finished)))
+(defun lsp-dafny--test-mode-line-process ()
+  "Check if `mode-line-process' contains our marker.
+
+See URL `https://github.com/Malabarba/spinner.el/issues/26' for
+details."
+  (let* ((sym (gensym))
+         (lsp-dafny--mode-line-process `(:eval (setq ,sym t))))
+    (ignore-errors
+      (set sym nil)
+      (format-mode-line mode-line-process)
+      (symbol-value sym))))
+
+(defun lsp-dafny-mode-line-status-module (command)
+  "Set up text-based verification progress for LSP Dafny according to COMMAND."
+  (pcase command
+    (`on
+     (make-local-variable 'mode-line-process)
+     (if mode-line-process
+         (unless (lsp-dafny--test-mode-line-process)
+           (add-to-list 'mode-line-process 'lsp-dafny--mode-line-process t))
+       (setq mode-line-process lsp-dafny--mode-line-process))
+     (add-hook 'after-change-functions #'lsp-dafny--mode-line-on-change nil t)
+     (add-hook 'lsp-dafny--verification-status-changed-hook
+               #'lsp-dafny--mode-line-update))
+    (`off
+     (setq-local mode-line-process
+                 (delq 'lsp-dafny--mode-line-process mode-line-process))
+     (remove-hook 'after-change-functions #'lsp-dafny--mode-line-on-change t)
+     (remove-hook 'lsp-dafny--verification-status-changed-hook
+                  #'lsp-dafny--mode-line-update))))
+
+;;;; Counterexamples
+
+(lsp-interface (dafny:counterexample (:position :variables)))
+
+(defvar-local lsp-dafny--counterexamples ()
+  "Local cache of counterexample windows.")
+
+(defun lsp-dafny--counterexamples-hide ()
+  "Hide counterexamples in the current buffer."
+  (lsp-dafny--with-whole-buffer-unmodified
+    (mapc #'delete-overlay lsp-dafny--counterexamples)))
+
+(defconst lsp-dafny--counterexamples-border
+  (concat
+   (propertize " " 'face 'lsp-dafny-counterexample-border
+               'display `(space :width 0.35 :height (1)))
+   (propertize " " 'display `(space :width 0.65 :height (1)))))
+
+(defconst lsp-dafny--counterexamples-separator
+  (propertize "\n" 'face 'lsp-dafny-counterexample-separator
+              'display '(height (progn 1))))
+
+(defconst lsp-dafny--counterexamples-empty-line
+  (propertize "\n" 'display '(height (progn 1))))
+
+(defun lsp-dafny--counterexamples-make-margin (width)
+  "Prepare a propertized string to indent a counterexample inset by WIDTH."
+  (concat (propertize " " 'display `(space :align-to ,width :height (1)))
+          lsp-dafny--counterexamples-border))
+
+(defun lsp-dafny--counterexamples-format-line (variable value indent)
+  "Format a VARIABLE and its VALUE for display, indented by INDENT."
+  (let* ((sep (string-match ":" variable nil t))
+         (typ (if sep (substring variable (1+ sep)) "??"))
+         (variable (if sep (substring variable 0 sep) variable))
+         (line (format "%s%s: %s := %s\n"
+                       indent
+                       (propertize variable 'face font-lock-variable-name-face)
+                       (propertize typ 'face font-lock-type-face)
+                       value)))
+    line))
+
+(defun lsp-dafny--counterexamples-format-inset (variables indent)
+  "Format VARIABLES extracted from a counterexample for display.
+
+Prefix each line with INDENT."
+  (let* ((indent-amt (string-width indent))
+         (indent-str (lsp-dafny--counterexamples-make-margin indent-amt))
+         (lines (ht-map (lambda (var val)
+                          (lsp-dafny--counterexamples-format-line
+                           var val indent-str))
+                        variables))
+         (str (if lines
+                   (string-join lines "")
+                 lsp-dafny--counterexamples-empty-line)))
+      (add-face-text-property 0 (length str)
+                              'lsp-dafny-counterexample-inset t str)
+      str))
+
+(defun lsp-dafny--counterexamples-cleanup-1 (str)
+  "Clean up Dafny values in STR (remove `_default' and `_module')."
+  (replace-regexp-in-string "\\_<_\\(default\\|module\\)\\_>[.]" "" str))
+
+(defun lsp-dafny--counterexamples-cleanup-variables (counterexamples)
+  "Clean up variable types in COUNTEREXAMPLES."
+  ;; FIXME: Move this to the server?
+  (pcase-dolist ((dafny:counterexample :variables) counterexamples)
+    (pcase-dolist (`(,var . ,val) (ht->alist variables))
+      (let ((var_ (lsp-dafny--counterexamples-cleanup-1 var))
+            (val_ (lsp-dafny--counterexamples-cleanup-1 val)))
+        (unless (and (equal var var_) (equal val val_))
+          (ht-remove variables var)
+          (ht-set variables var_ val_)))))
+  counterexamples)
+
+(defun lsp-dafny--counterexamples-render-one (cx)
+  "Create an overlay for one counter example CX and return it."
+  (pcase-let* (((dafny:counterexample :position :variables) cx)
+               (pt (lsp--position-to-point position)))
+    (goto-char pt)
+    (let* ((bol (progn (beginning-of-line) (point)))
+           (eoi (progn (skip-chars-forward " \t") (point)))
+           (eol (progn (end-of-line) (point)))
+           (next-bol (min (1+ eol) (point-max)))
+           (indent (buffer-substring bol eoi))
+           (prefix (if (equal next-bol eol) "\n" ""))
+           (separator lsp-dafny--counterexamples-separator)
+           (text (lsp-dafny--counterexamples-format-inset variables indent)))
+      (let ((ov (make-overlay next-bol next-bol nil nil nil)))
+        (overlay-put ov 'after-string (concat prefix separator text))
+        ov))))
+
+(defun lsp-dafny--counterexamples-show ()
+  "Show counterexamples in the current buffer."
+  (lsp-dafny--counterexamples-hide)
+  (lsp-dafny--with-whole-buffer-unmodified
+    (let* ((params `(:textDocument ,(lsp--versioned-text-document-identifier)))
+           (insets (lsp-request "dafny/counterExample" params))
+           (inhibit-field-text-motion t)
+           (inhibit-point-motion-hooks t))
+      (pcase-dolist (cx (lsp-dafny--counterexamples-cleanup-variables insets))
+        (push (lsp-dafny--counterexamples-render-one cx)
+              lsp-dafny--counterexamples)))))
+
+(define-minor-mode lsp-dafny-counterexamples-mode
+  "Display verification counterexamples in the current buffer."
+  :lighter nil
+  (pcase lsp-dafny-counterexamples-mode
+    (`t (lsp-dafny--counterexamples-show))
+    (`nil (lsp-dafny--counterexamples-hide))))
+
+(defun lsp-dafny-counterexamples-module (command)
+  "Set up counterexample support for LSP Dafny according to COMMAND."
+  (pcase command
+    (`on)
+    (`off (lsp-dafny--counterexamples-hide))))
 
 ;;;; Logging
 
@@ -291,69 +529,25 @@ CALLBACK is the status callback passed by Flycheck."
           (goto-char (point-max))
           (insert message))))))
 
-;;;; Additional behaviors
-
-(defun lsp-dafny--on-change (&rest _args)
-  "Reset verification progress."
-  (setq lsp-dafny--verification-status nil)
-  (force-mode-line-update))
-
-(defun lsp-dafny--mode-line-process-format ()
-  "Compute text to display in Dafny's modeline."
-  (pcase-let ((`(,status ,icon ,tooltip)
-               (or lsp-dafny--verification-status
-                   '(waiting " " "Verification not started"))))
-    (let ((face (pcase status
-                  (`waiting nil)
-                  (`running '(bold compilation-mode-line-run))
-                  (`success '(bold compilation-mode-line-exit))
-                  (`failure '(bold compilation-mode-line-fail)))))
-      (propertize (if (eq (length icon) 1)
-                      (compose-string icon 0 1 `[#x2003 (Bl . Bl) ,(aref icon 0)])
-                    ;;  '(concat "\t" icon "\t"))
-                    icon)
-                  'face face
-                  'help-echo tooltip))))
-
-(defconst lsp-dafny--mode-line-process
-  '(:eval (lsp-dafny--mode-line-process-format)))
-(put 'lsp-dafny--mode-line-process 'risky-local-variable t)
-
-(define-minor-mode lsp-dafny--mode
-  "Minor mode that implements Dafny features that depend on LSP."
-  :init-value nil
-  ;; :lighter (:eval (lsp-dafny--mode-line-text))
-  (cond
-   (lsp-dafny--mode
-    (make-local-variable 'mode-line-process)
-    (add-hook 'after-change-functions #'lsp-dafny--on-change nil t)
-    (add-function :override
-                  (local 'lsp-diagnostics--flycheck-start)
-                  #'lsp-dafny-diagnostics--flycheck-start)
-    (if mode-line-process
-        (add-to-list 'mode-line-process 'lsp-dafny--mode-line-process t)
-      (setq mode-line-process '("" lsp-dafny--mode-line-process)))
-    (setq-local company-backends
-                (cons #'company-capf (remove #'company-capf company-backends))))
-   (t
-    (remove-hook 'after-change-functions #'lsp-dafny--on-change t)
-    (remove-function (local 'lsp-diagnostics--flycheck-start)
-                     #'lsp-dafny-diagnostics--flycheck-start)
-    (setq-local mode-line-process
-                (delq 'lsp-dafny--mode-line-process mode-line-process))
-    (setq-local company-backends
-                (remove #'company-capf company-backends)))))
-
-(define-minor-mode lsp-dafny-trace-mode
-  "Minor mode that records all queries to the server."
-  :init-value nil
-  (cond
-   (lsp-dafny-trace-mode
+(defun lsp-dafny-trace-module (command)
+  "Set up Dafny LSP tracing according to COMMAND."
+  (pcase command
+   (`on
     (advice-add 'lsp--send-no-wait :after #'lsp-dafny--log-io))
-   (t
+   (`off
     (advice-remove 'lsp--send-no-wait #'lsp-dafny--log-io))))
 
-;;;; Entry point
+;;; Entry point
+
+(defconst lsp-dafny--notification-handlers
+  (map-into
+   '(("serverStarted" . ignore)
+     ("dafnyLanguageServerVersionReceived" . ignore)
+     ("dafny/ghost/diagnostics" . ignore)
+     ("dafny/verification/status/gutter" . ignore)
+     ("dafny/textDocument/symbolStatus" . ignore)
+     ("dafny/compilation/status" . lsp-dafny--handle-/compilation/status))
+   'hash-table))
 
 (defun lsp-dafny-ensure-executable (executable)
   "Ensure that EXECUTABLE exists."
@@ -376,10 +570,6 @@ CALLBACK is the status callback passed by Flycheck."
 `lsp-dafny-server-verification-time-limit'" other)))
     ,@lsp-dafny-server-args))
 
-(defun lsp-dafny--after-open-fn ()
-  "Turn `dafny-mode' features that depend on LSP."
-  (lsp-dafny--mode))
-
 ;;;###autoload
 (defun lsp-dafny-register ()
   "Register the Dafny LSP server with `lsp-mode'."
@@ -392,7 +582,7 @@ CALLBACK is the status callback passed by Flycheck."
     :server-id 'dafny
     :download-server-fn #'lsp-dafny--server-install
     :notification-handlers lsp-dafny--notification-handlers
-    :after-open-fn #'lsp-dafny--after-open-fn)))
+    :after-open-fn #'lsp-dafny--mode)))
 
 ;;;###autoload
 (with-eval-after-load 'lsp-mode
