@@ -41,8 +41,8 @@
 (defconst z3-smt2-builtins '("assert" "check-sat" "check-sat-assuming" "declare-const" "declare-datatype"
                              "declare-datatypes" "declare-fun" "declare-sort" "define-fun" "define-fun-rec"
                              "define-sort" "echo" "exit" "get-assertions" "get-assignment" "get-info"
-                             "get-model" "get-option" "get-proof" "get-unsat-assumptions" "get-unsat-core" 
-                             "get-value" "pop" "push" "reset" "reset-assertions" "set-info" "set-logic" 
+                             "get-model" "get-option" "get-proof" "get-unsat-assumptions" "get-unsat-core"
+                             "get-value" "pop" "push" "reset" "reset-assertions" "set-info" "set-logic"
                              "set-option"))
 
 (defconst z3-smt2-types '("Array" "Set" "List" "Bool" "Int" "Real"))
@@ -64,6 +64,13 @@ few extra flags in addition to the default ones."
 (defcustom z3-smt2-prover-custom-args '()
   "Extra arguments to pass to Z3 when checking a file.
 These come in addition to `z3-smt2-prover-args'."
+  :group 'z3)
+
+(defcustom z3-smt2-prover-foreground-args '()
+  "Extra arguments to pass to Z3 for foreground verification.
+These come in addition to `z3-smt2-prover-args' and
+`z3-smt2-prover-custom-args' and are used when manually launching
+verification (\\[boogie-friends-verify])."
   :group 'z3)
 
 (defcustom z3-smt2-prover-background-args '()
