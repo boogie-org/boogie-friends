@@ -250,6 +250,7 @@ Useful to ignore mouse-up events handled mouse-down events."
 
 (defconst dafny-mode-syntax-table
   (let ((tbl (make-syntax-table)))
+    (modify-syntax-entry ??  "w" tbl)
     (modify-syntax-entry ?'  "w" tbl)
     (modify-syntax-entry ?_  "w" tbl)
     ;;
