@@ -248,8 +248,9 @@ tracing.  Returns the compile buffer."
   (boogie-friends-save-or-error)
   (let ((checker (intern (boogie-friends-mode-name)))
         (boogie-friends--prover-running-in-foreground-p t))
+    (flycheck-reset-enabled-checker checker)
     (unless (flycheck-may-use-checker checker)
-      (user-error "Prover %s is improperly configured" checker))
+      (user-error "Prover %s is improperly configured; use \\[flycheck-verify-setup] to diagnose." checker))
     (let* ((custom-args (and use-alternate (boogie-friends-mode-val 'prover-alternate-args)))
            (compilation-args (boogie-friends-mode-val 'prover-foreground-args))
            (boogie-friends--prover-additional-args
