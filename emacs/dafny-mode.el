@@ -288,7 +288,8 @@ Useful to ignore mouse-up events handled mouse-down events."
   "Classifies the current line (for indentation)."
   (save-excursion
     (beginning-of-line)
-    (cons (cond ((or (comment-beginning) (looking-at-p "\\s-*/[/*]")) 'comment)
+    (cons (cond ((looking-at-p "\\s-*///")                            'literate)
+                ((or (comment-beginning) (looking-at-p "\\s-*/[/*]")) 'comment)
                 ((looking-at-p "\\s-*\\(case\\|else\\)")              'case)
                 ((looking-at-p ".*{\\s-*\\(//.*\\)?$")                'open)
                 ((looking-at-p ".*}\\s-*\\(//.*\\)?$")                'close)
@@ -297,26 +298,40 @@ Useful to ignore mouse-up events handled mouse-down events."
                 (t                                                    'none))
           (current-indentation))))
 
+(defun dafny--backwards-line-for-indent ()
+  "Skip backwards and over literate comments."
+  (when (boogie-friends-backward-line)
+    (while (and (not (bobp))
+                (save-excursion (beginning-of-line)
+                                (looking-at-p "\\s-*///")))
+      (boogie-friends-backward-line))
+    t))
+
 (defun dafny-indent ()
   "Indent current line."
   (interactive)
   (beginning-of-line)
   (let* ((case-fold-search nil)
          (pprev-type  (car-safe (save-excursion
-                                  (and (boogie-friends-backward-line)
-                                       (boogie-friends-backward-line)
+                                  (and (dafny--backwards-line-for-indent)
+                                       (dafny--backwards-line-for-indent)
                                        (dafny-line-props)))))
-         (prev-props  (save-excursion (and (boogie-friends-backward-line) (dafny-line-props))))
+         (prev-props  (save-excursion
+                        (and (dafny--backwards-line-for-indent)
+                             (dafny-line-props))))
          (prev-type   (car-safe prev-props))
          (prev-offset (or (cdr-safe prev-props) 0))
          (is-defun    (looking-at-p dafny-extended-defun-regexp))
          (is-close    (looking-at-p "[^{\n]*}"))
          (is-lonely-open (looking-at-p "[ \t]*{"))
-         (is-case    (looking-at-p "[ \t]*case"))
-         (is-else    (looking-at-p "[ \t]*else"))
+         (is-case     (looking-at-p "[ \t]*case"))
+         (is-else     (looking-at-p "[ \t]*else"))
+         (literate    (looking-at-p "\\s-*///"))
          (comment-beg (save-excursion (comment-beginning))))
     (indent-line-to
-     (cond (comment-beg (if (< comment-beg (point-at-bol)) ;; Multiline comment; indent to '*' or beginning of text
+     (cond (literate ;; Literate comment: don't indent
+            0)
+           (comment-beg (if (< comment-beg (point-at-bol)) ;; Multiline comment; indent to '*' or beginning of text
                             (let ((incr (if (looking-at-p "\\s-*\\*") 1 3)))
                               (save-excursion (goto-char comment-beg) (+ (current-indentation) incr)))
                           prev-offset))

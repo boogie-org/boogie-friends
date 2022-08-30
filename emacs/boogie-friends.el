@@ -452,7 +452,9 @@ If SET-POINT, place the point where EVENT points to."
   t)
 
 (defun boogie-friends-backward-line ()
-  "Jump one line backwards, and then skip over blank lines."
+  "Jump one line backwards, and then skip over blank lines.
+
+Return nil if point was on the first line."
   (forward-line 0)
   (/= 0 (skip-chars-backward "\r\n\t ")))
 
