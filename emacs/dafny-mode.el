@@ -47,11 +47,13 @@
     "least predicate" "greatest predicate" "least lemma" "greatest lemma"))
 
 (defconst dafny-specifiers
-  '("decreases" "ensures" "export" "invariant" "modifies" "provides" "reads" "reveals" "requires" "witness"))
+  '("decreases" "ensures" "invariant" "modifies" "provides" "reads" "requires" "witness"))
 
 (defconst dafny-modifiers '("abstract" "ghost" "nameonly" "static" "twostate"))
 
-(defconst dafny-builtins '("extends" "import" "include" "opened" "refines" "returns" "yields"))
+(defconst dafny-builtins '("extends" "refines" "returns" "yields"))
+
+(defconst dafny-macros '("import" "opened" "export" "reveals" "provides" "include"))
 
 (defconst dafny-keywords
   '("allocated" "as" "assert" "break" "by" "calc" "case" "downto" "else" "exists" "expect" "false"
@@ -74,7 +76,7 @@
 
 (defconst dafny-all-keywords
   (cl-loop for source in '( dafny-defuns dafny-specifiers dafny-modifiers
-                            dafny-builtins dafny-keywords dafny-dangerous
+                            dafny-builtins dafny-macros dafny-keywords dafny-dangerous
                             dafny-types)
            append (mapcar (lambda (kwd) (propertize kwd 'source source))
                           (symbol-value source))))
@@ -83,11 +85,13 @@
 (defconst dafny-specifiers-regexp (regexp-opt dafny-specifiers 'symbols))
 (defconst dafny-modifiers-regexp  (regexp-opt dafny-modifiers 'symbols))
 (defconst dafny-builtins-regexp   (regexp-opt dafny-builtins 'symbols))
+(defconst dafny-macros-regexp     (regexp-opt dafny-macros 'symbols))
 (defconst dafny-keywords-regexp   (regexp-opt dafny-keywords 'symbols))
 (defconst dafny-dangerous-regexp  (regexp-opt dafny-dangerous 'symbols))
 (defconst dafny-types-regexp      (regexp-opt dafny-types 'symbols))
 
 (defconst dafny-extended-defun-regexp (concat "\\s-*\\(" dafny-modifiers-regexp "\\)*\\s-*" dafny-defuns-regexp))
+(defconst dafny-extended-macros-regexp (concat "\\s-*" dafny-macros-regexp))
 
 (defconst dafny-extended-block-head-regexp (concat "\\s-*\\(" dafny-modifiers-regexp "\\)*"
                                                    "\\s-*"    (regexp-opt (append dafny-block-heads dafny-defuns) 'symbols)))
@@ -218,6 +222,7 @@ the return value."
    (cons dafny-modifiers-regexp font-lock-preprocessor-face)
    (cons dafny-specifiers-regexp font-lock-doc-face)
    (cons dafny-builtins-regexp font-lock-builtin-face)
+   (cons dafny-macros-regexp font-lock-preprocessor-face)
    (cons "!\\_<in\\_>" font-lock-keyword-face) ;; Needed because '!' is not part of a symbol, so adding '!in' to keywords doesn't work
    (cons dafny-keywords-regexp font-lock-keyword-face)
    `(,dafny-dangerous-regexp . 'dafny-dangerous-face)
@@ -322,6 +327,7 @@ Useful to ignore mouse-up events handled mouse-down events."
          (prev-type   (car-safe prev-props))
          (prev-offset (or (cdr-safe prev-props) 0))
          (is-defun    (looking-at-p dafny-extended-defun-regexp))
+         (is-macro    (looking-at-p dafny-extended-macros-regexp))
          (is-close    (looking-at-p "[^{\n]*}"))
          (is-lonely-open (looking-at-p "[ \t]*{"))
          (is-case     (looking-at-p "[ \t]*case"))
@@ -344,7 +350,8 @@ Useful to ignore mouse-up events handled mouse-down events."
                 ;; The bound ensures that brackets headerless blocks are indented properly
                 (re-search-backward (concat "^\\s-*}?" dafny-extended-block-head-regexp) bound t))
               (current-indentation)))
-           (is-defun (if (memq prev-type '(open)) (indent-next-tab-stop prev-offset) prev-offset))
+           ((or is-defun is-macro)
+            (if (memq prev-type '(open)) (indent-next-tab-stop prev-offset) prev-offset))
            (is-case (-if-let (parent (save-excursion (when (re-search-backward "^\\s-*match" nil t) (current-indentation))))
                         (indent-next-tab-stop parent)
                       prev-offset))
