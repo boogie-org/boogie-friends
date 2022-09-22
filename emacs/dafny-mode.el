@@ -295,7 +295,7 @@ Useful to ignore mouse-up events handled mouse-down events."
     (beginning-of-line)
     (cons (cond ((looking-at-p "\\s-*///")                            'literate)
                 ((or (comment-beginning) (looking-at-p "\\s-*/[/*]")) 'comment)
-                ((looking-at-p "\\s-*\\(case\\|else\\)")              'case)
+                ((looking-at-p "\\s-*\\(if\\|case\\|else\\)")         'case)
                 ((looking-at-p ".*{\\s-*\\(//.*\\)?$")                'open)
                 ((looking-at-p ".*}\\s-*\\(//.*\\)?$")                'close)
                 ((looking-at-p ".*;\\s-*\\(//.*\\)?$")                'semicol)
