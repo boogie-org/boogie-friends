@@ -352,11 +352,20 @@ Useful to ignore mouse-up events handled mouse-down events."
               (current-indentation)))
            ((or is-defun is-macro)
             (if (memq prev-type '(open)) (indent-next-tab-stop prev-offset) prev-offset))
-           (is-case (-if-let (parent (save-excursion (when (re-search-backward "^\\s-*match" nil t) (current-indentation))))
-                        (indent-next-tab-stop parent)
-                      prev-offset))
-           (is-else (or (save-excursion (when (re-search-backward "^\\s-*if" nil t) (current-indentation)))
-                        prev-offset))
+           (is-case
+            (save-excursion
+              (cond
+               ((re-search-backward "^\\s-*match" nil t)
+                (goto-char (point-at-eol))
+                (if (looking-back "{\s*" (match-end 0))
+                    (indent-next-tab-stop (current-indentation))
+                  (current-indentation)))
+               (t prev-offset))))
+           (is-else
+            (save-excursion
+              (if (re-search-backward "^\\s-*if" nil t)
+                  (current-indentation)
+                prev-offset)))
            (t (pcase prev-type
                 (`comment prev-offset)
                 (`case    (indent-next-tab-stop prev-offset))
