@@ -68,17 +68,49 @@ Notice the error highlighting, the symbol beautification (`forall` appears as `�
 
 2. Install the package: `M-x package-refresh-contents RET`, then `M-x package-install RET boogie-friends RET`
 
-3. Optionally, use `M-x customize-variable RET lsp-dafny-preferred-version` to chose which version of Dafny to install and run.
+3. For Dafny, just use `M-x lsp` to download and run the Dafny language server.  For other languages (or to use Dafny's legacy server), configure Flycheck as shown below.
 
-4. Use `M-x lsp` in a Dafny file (`.dfy`) to turn on on-the-fly verification and advanced IDE features.
+### On-the-fly verification
 
-### Configuration
+### For Boogie and Z3
 
-To get real-time checking in Boogie and Z3 files, use `(setq flycheck-boogie-executable "PATH-TO-BOOGIE")` and `(setq flycheck-z3-smt2-executable "PATH-TO-Z3")`.
+Use the following settings to point `boogie-friends` to Boogie and Z3 binaries:
 
-In Dafny files `M-x lsp` should be enough, but if you prefer a simpler setup use `(setq flycheck-dafny-executable "PATH-TO-dafny")` (on Windows use `Dafny.exe` instead of `dafny`).
+```elisp
+;; To get real-time error highlights (Flycheck) in Boogie files
+(setq flycheck-boogie-executable "PATH-TO-BOOGIE-BINARIES/Boogie")
 
-To use Z3's axiom profiler, use `(setq boogie-friends-profile-analyzer-executable "PATH-TO-Z3-AXIOM-PROFILER")`.
+;; To get real-time error highlights (Flycheck) in Z3 files
+(setq flycheck-z3-executable "PATH-TO-Z3-BINARIES/z3")
+
+;; To use Z3's axiom profiler
+(setq boogie-friends-profile-analyzer-executable "PATH-TO-Z3-AXIOM-PROFILER")
+```
+
+### For Dafny
+
+`dafny-mode` supports three real-time verification mechanisms: `cli`, `server`, and `lsp`.  LSP is the recommended one; it supports automatic downloads and advanced IDE features.  To use it, open a Dafny buffer and type `M-x lsp` (optionally, use `M-x customize-variable RET lsp-dafny-preferred-version` first to chose which version of Dafny to install and run).
+
+As an alternative (if you run into stability or performance issues with LSP), you can either:
+
+- Get on-the-fly verification through the legacy Dafny server, which more basic than LSP but also more robust, by downloading a Dafny release manually and configuring `flycheck-inferior-dafny-executable`:
+
+  ```elisp
+  (setq flycheck-inferior-dafny-executable "PATH-TO-DAFNY-BINARIES/DafnyServer")
+  (setq dafny-verification-backend 'server)
+  ```
+
+- Get on-the-fly verification through the command line, which is slower (no caching) but even more robust, by downloading a Dafny release manually and configuring `flycheck-dafny-executable`:
+
+  ```elisp
+  (setq flycheck-dafny-executable "PATH-TO-DAFNY-BINARIES/DafnyServer")
+  (setq dafny-verification-backend 'cli)
+  ```
+
+If you run into issues, `C-c ! v` (`flycheck-verify-setup`) should have debugging info.
+
+### For Boogie
+
 
 ### Keybindings
 
@@ -112,17 +144,7 @@ To use Z3's axiom profiler, use `(setq boogie-friends-profile-analyzer-executabl
 
 #### Real-time error highlighting
 
-Real-time error highlighting is enabled by default for all languages. You can disable it:
-
-* For just one language (say Dafny) by adding `(setq flycheck-disabled-checkers '(dafny))` to your `.emacs`.
-
-* Entirely by adding the following to your `.emacs`:
-
-    ```elisp
-    (defun no-flycheck-in-dafny-mode ()
-      (flycheck-mode -1))
-    (add-hook 'dafny-mode-hook #'no-flycheck-in-dafny-mode)
-    ```
+Real-time error highlighting is enabled by default for all languages. You can disable it by adding `(setq flycheck-disabled-checkers '(dafny inferior-dafny))` to your `.emacs`.
 
 #### Font support
 
@@ -147,16 +169,6 @@ If you don't like the way one particular symbol is rendered, you can adjust the 
 ```elisp
 (set-fontset-font t (cons ?≔ ?≔) "FreeSerif" nil 'prepend)
 ```
-
-#### Using the Dafny server
-
-Add the following piece of code to your `.emacs` and restart to try out the Dafny server. Make sure you also set `flycheck-inferior-dafny-executable`.
-
-```elisp
-(setq dafny-verification-backend 'server)
-```
-
-If you run into issues, `C-c ! v` (`flycheck-verify-setup`) should have debugging info.
 
 #### Profiling
 
@@ -201,13 +213,9 @@ For example, you can add the following to the top of a file:
 
 ### Troubleshooting
 
-* If you're having issues with the Dafny server, try using the simpler CLI-based backend by adding the following to your `.emacs` and restarting (if you run into such issues, though, we'd love to hear about them):
-```elisp
-(setq dafny-verification-backend 'cli)
-```
-(note that you can also disable on-the-fly verification by replacing `'cli` with `nil`)
+* If you run into trouble LSP, consider using the legacy Dafny server.  If you run into issues with *that*, then the CLI-based verification backend should be fine, though slower (see instructions at the top of this README).  You can also disable on-the-fly verification using `(setq dafny-verification-backend 'cli)`.
 
-* If the verification seems to be taking forever, `M-x inferior-dafny-reset` may help.
+* If the verification seems to be taking forever, `M-x inferior-dafny-reset` may help when using the legacy server.  With LSP, typing any character interrupts verification.
 
 ### Acknowledgments
 
