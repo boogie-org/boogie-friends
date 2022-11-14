@@ -420,7 +420,7 @@ details."
 
 (defun lsp-dafny--counterexamples-format-line (variable value indent)
   "Format a VARIABLE and its VALUE for display, indented by INDENT."
-  (let* ((sep (string-match ":" variable nil t))
+  (let* ((sep (string-match ":" variable))
          (typ (if sep (substring variable (1+ sep)) "??"))
          (variable (if sep (substring variable 0 sep) variable))
          (line (format "%s%s: %s := %s\n"
