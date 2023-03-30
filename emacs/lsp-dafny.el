@@ -31,7 +31,7 @@
 
 ;;;; Installation options
 
-(defconst lsp-dafny-latest-known-version "3.9.0")
+(defconst lsp-dafny-latest-known-version "4.0.0")
 
 (defun lsp-dafny--version-safe-p (vernum)
   "Check whether VERNUM is a safe value for `lsp-dafny-preferred-version'."
@@ -43,6 +43,11 @@
   :safe #'lsp-dafny--version-safe-p
   :type '(choice (const :tag "Auto-install the latest version" nil)
                  (choice :tag "Auto-install a specific version"
+                         (const "4.0.0")
+                         (const "3.13.0")
+                         (const "3.12.0")
+                         (const "3.11.0")
+                         (const "3.10.0")
                          (const "3.9.0")
                          (const "3.8.1")
                          (const "3.8.0")
@@ -168,9 +173,9 @@ a directory name, or nil if VERNUM is `path'."
   "Compute the URL to download Dafny version VERNUM."
   (let ((platform
          (pcase system-type
-           ((or `gnu `gnu/linux) "ubuntu-16.04")
-           ((or `windows-nt `cygwin) "win")
-           ((or `darwin) "osx-10.14.2")
+           ((or `gnu `gnu/linux) (if (string-version-lessp vernum "3.13.0") "ubuntu-16.04" "ubuntu-20.04"))
+           ((or `windows-nt `cygwin) (if (string-version-lessp vernum "3.13.0") "win" "windows-2019"))
+           ((or `darwin) (if (string-version-lessp vernum "3.13.0") "osx-10.14.2" "macos-11"))
            (other "Unsupported platform %S" other))))
     (format "%s/v%s/dafny-%s-x64-%s.zip"
             "https://github.com/dafny-lang/dafny/releases/download"
