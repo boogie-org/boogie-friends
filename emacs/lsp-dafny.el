@@ -31,7 +31,7 @@
 
 ;;;; Installation options
 
-(defconst lsp-dafny-latest-known-version "3.9.0")
+(defconst lsp-dafny-latest-known-version "4.4.0")
 
 (defun lsp-dafny--version-safe-p (vernum)
   "Check whether VERNUM is a safe value for `lsp-dafny-preferred-version'."
@@ -43,6 +43,7 @@
   :safe #'lsp-dafny--version-safe-p
   :type '(choice (const :tag "Auto-install the latest version" nil)
                  (choice :tag "Auto-install a specific version"
+                         (const "4.4.0")
                          (const "3.9.0")
                          (const "3.8.1")
                          (const "3.8.0")
@@ -162,13 +163,13 @@ a directory name, or nil if VERNUM is `path'."
 
 (defun lsp-dafny--server-installed-executable ()
   "Compute the path to the installed version of DafnyLanguageServer."
-  (lsp-dafny--installed-executable "DafnyLanguageServer"))
+  (lsp-dafny--installed-executable "dafny"))
 
 (defun lsp-dafny--zip-url (vernum)
   "Compute the URL to download Dafny version VERNUM."
   (let ((platform
          (pcase system-type
-           ((or `gnu `gnu/linux) "ubuntu-16.04")
+           ((or `gnu `gnu/linux) "ubuntu-20.04")
            ((or `windows-nt `cygwin) "win")
            ((or `darwin) "osx-10.14.2")
            (other "Unsupported platform %S" other))))
@@ -557,18 +558,18 @@ Prefix each line with INDENT."
 (defun lsp-dafny--server-command ()
   "Compute the command to run Dafny's LSP server."
   `(,(lsp-dafny-ensure-executable (lsp-dafny--server-installed-executable))
-    ,(pcase lsp-dafny-server-automatic-verification-policy
-       ((and policy (or `never `onchange `onsave))
-        (format "--documents:verify=%S" policy))
-       (other (user-error "Invalid value %S in \
-`lsp-dafny-server-automatic-verification-policy'" other)))
-    ,@(pcase lsp-dafny-server-verification-time-limit
-       (`nil nil)
-       ((and limit (pred integerp))
-        (list (format "--verifier:timelimit=%d" limit)))
-       (other (user-error "Invalid value %S in \
-`lsp-dafny-server-verification-time-limit'" other)))
-    ,@lsp-dafny-server-args))
+    "server"
+    ; ,(pcase lsp-dafny-server-automatic-verification-policy
+    ;    ((and policy (or `never `onchange `onsave))
+    ;     (format "--documents:verify=%S" policy))
+    ;    (other (user-error "Invalid value %S in \ `lsp-dafny-server-automatic-verification-policy'" other)))
+    ; ,@(pcase lsp-dafny-server-verification-time-limit
+    ;    (`nil nil)
+    ;    ((and limit (pred integerp))
+    ;     (list (format "--verifier:timelimit=%d" limit)))
+    ;    (other (user-error "Invalid value %S in \ `lsp-dafny-server-verification-time-limit'" other)))
+    ; ,@lsp-dafny-server-args
+    ))
 
 ;;;###autoload
 (defun lsp-dafny-register ()
