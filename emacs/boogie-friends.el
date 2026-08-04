@@ -111,7 +111,7 @@
              ,(boogie-friends-message-pattern))
       (error ,@header ,(boogie-friends-message-pattern "Timed out on"))
       (error ,@header ,(boogie-friends-message-pattern "Verification of "
-                                         '(+ (not (any " ")))
+                                         '(+ (not (any "\n")))
                                          " timed out"))
       (warning ,@header "Warning" ,@colonspace
                ,(boogie-friends-message-pattern))
