@@ -135,13 +135,13 @@ not nil."
     ((and v (pred stringp))
      (condition-case err
          (progn (version-to-list v) v)
-       (err (user-error "Invalid `lsp-dafny-preferred-version': %S
+       (error (user-error "Invalid `lsp-dafny-preferred-version': %S
 %S" v (cdr err)))))
-     (`(,v)
-      (if (file-exists-p v) (list v)
+     ((and v `(,(and d (pred stringp))))
+      (if (file-exists-p d) v
         (user-error "Invalid `lsp-dafny-preferred-version': %S
-Directory %s does not exist" v)))
-     (_ (user-error "Invalid `lsp-dafny-preferred-version': %S"))))
+Directory %s does not exist" v d)))
+     (other (user-error "Invalid `lsp-dafny-preferred-version': %S" other))))
 
 (defun lsp-dafny-server-install-dir (&optional vernum)
   "Compute the path to Dafny's installation folder for version VERNUM.
